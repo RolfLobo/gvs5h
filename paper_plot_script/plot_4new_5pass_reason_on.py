@@ -10,12 +10,12 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 from plot_16k_reason_off_5_pass import (
-    ALPHA, CI_LW, EDGE_LW, FIGSIZE, FS_BODY, FS_NOTE, FS_STAR, FS_SUB, FS_TITLE,
+    CI_LW, EDGE_LW, FIGSIZE, FS_BODY, FS_SUB, FS_TITLE,
     MARGINS, PLOTS, THEMES,
-    apply_theme, fmt_p_num, holm, pass_ci, perm_sign_p, ring, slug, stars, wrap_title, write_figure,
+    apply_theme, fmt_p_num, holm, pass_ci, perm_sign_p, ring, slug, wrap_title, write_figure,
 )
 from matplotlib.legend_handler import HandlerTuple
-from scipy.stats import binomtest
+from scipy.stats import binomtest, t as t_dist
 
 import palette
 
@@ -24,6 +24,8 @@ ROOT = os.path.dirname(HERE)
 PASSES = [1, 2, 3, 4, 5]
 R4 = f"{ROOT}/runs/4models-1pass-reason-on/results"
 RF = f"{ROOT}/runs/fable5-5pass-single/results"
+FN = f"{ROOT}/runs/q38-fn-5pass/results"
+DS = f"{ROOT}/runs/ds-v41-f-5pass/results"
 
 MODELS = [
     ("fable", "Claude Fable 5", f"{RF}/fable5_single_p%d.patched.json", None),
@@ -33,52 +35,53 @@ MODELS = [
                                f"{R4}/luna_multiagent_p%d.patched.json"),
     ("q38",   "Qwen3.8-27B",   f"{R4}/q38_single_p%d.cap128k.patched.json",
                                f"{R4}/q38_multiagent_p%d.patched.json"),
+    ("q38fn", "Qwen3.8-Flash-Next", f"{FN}/q38_fn_single_p%d.patched.json",
+                                    f"{FN}/q38_fn_multiagent_p%d.patched.json"),
+    ("dsv41", "DeepSeek-V4.1-Flash", f"{DS}/ds_v41_f_single_p%d.patched.json",
+                                     f"{DS}/ds_v41_f_multiagent_p%d.patched.json"),
 ]
 
 Q38_ASGEN = f"{R4}/q38_single_p%d.patched.json"
 
-FILLS = {k: palette.FILLS[k] for k in ("q38", "luna", "terra", "fable")}
+FILLS = {k: palette.FILLS[k] for k in ("q38", "q38fn", "luna", "terra", "dsv41", "fable")}
 FABLE_DARK = FILLS["fable"][1]
 
-TITLE = ("Manager vs single call, four models "
+TITLE = ("Manager vs single call, six models "
          "— LCB-100, 5 passes, 128k max tokens, reasoning ON")
 
-CAPTION = ("\\textbf{Manager vs.\\ single call.} 128k $\\times$ 5 passes, "
-           "reasoning on.")
+CAPTION = ("\\textbf{Manager vs.\\ single call.} The scores from Table~\\ref{tab:main} in a graph.")
+
+# Six full model names will not fit on one row of ticks -- at four they did, at six
+# "Qwen3.8-27B", "Qwen3.8-Flash-Next" and "DeepSeek-V4.1-Flash" run into each other. These
+# are the same names broken over two lines, as in plot_v2_20260915.py.
+XLABELS = {
+    "fable": "Claude\nFable 5",
+    "terra": "GPT-5.6\nTerra",
+    "luna": "GPT-5.6\nLuna",
+    "q38": "Qwen3.8\n27B",
+    "q38fn": "Qwen3.8\nFlash-Next",
+    "dsv41": "DeepSeek\nV4.1-Flash",
+}
 
 BAR_W = 0.38
-PITCH = 1.5
-XLIM = 150
+PITCH = 1.0
+# Just clears the tallest value label (Qwen3.8-27B's manager CI tops out at 94.7); the axis
+# still ticks to 100. Anything higher is empty band between the title and the bars.
+YLIM = 103
 
-FIGSIZE_H = (FIGSIZE[0], FIGSIZE[0] * 0.86)
-M4 = dict(MARGINS, left=0.025, right=0.98, top=0.842, bottom=0.158)
+FIGSIZE_V = (FIGSIZE[0], FIGSIZE[0] * 0.52)
+M4 = dict(MARGINS, left=0.062, right=0.99, top=0.865, bottom=0.20)
 LEG_Y = 0.015
-VS_X = 129
 
 
 def notes(stats):
-    tested = [s for s in stats if s["has_mgr"]]
-    gaps = ", ".join(f"{s['label']} {fmt_p_num(s['vs_p_holm'], 2, s['vs_floored'])}"
-                     for s in tested)
-    floor = ' "<" is the permutation floor.' if any(s["vs_floored"] for s in tested) else ""
-    agree = "; ".join(f"{s['label']} {s['mgr_only']}/{s['sgl_only']}" for s in tested)
+    # The manager-only/single-only problem-pass counts are Table~\ref{tab:agreement} in the
+    # appendix now; make_arm_tables.py builds it from the stats dicts compute() returns.
     return [
         "Bars are pass@1 on the same 100 problems, the line through each the 95% CI across "
-        "the 5 passes (t, df = 4). The top bar of each pair is the manager, dark; the "
-        "single call is under it, light; hatch is the model. \"Single call\" is one call "
-        "with no tools and no loop; Fable 5 ran single-only, so it has one bar, which the "
-        "dashed rule carries across the chart.",
-        f"The bracket beside each pair is manager − single call; the right-hand column "
-        f"tests the top bar against Fable 5. "
-        f"Both are paired sign-flip permutation tests, unit = problem (n = 100), "
-        f"Holm-corrected within each family of 3: * p < .05, ** p < .01, *** p < .001.{floor}"
-        f" The three within-model Δ all clear p < 1e-4; against Fable 5, p = {gaps}.",
-        f"Manager-only vs single-only problem-passes ({tested[0]['n_pp']} per model): "
-        f"{agree}; exact McNemar {fmt_p_num(max(s['mcnemar_p'] for s in tested), 1)} "
-        f"or better. The gains are not compensating wins and losses.",
-        "Every arm is at a 128k cap and re-scored on the corrected evaluator "
-        "(Appendix C); Qwen3.8-27B's single arm is the 128k cap-matched replay of a "
-        "250k generation, which Appendix B describes and Section 5.2 prices.",
+        "the 5 passes (t, df = 4). The left bar of each pair is the single call, light; the "
+        "manager is beside it, dark; hatch is the model. Fable 5 ran single-only, so it has one bar, which the "
+        "dashed rule carries across the chart."
     ]
 
 
@@ -135,7 +138,76 @@ def compute():
         s.update(vs_fable=100 * obs, vs_p_raw=p, vs_floored=floored)
     for s, p in zip(tested, holm([s["vs_p_raw"] for s in tested])):
         s["vs_p_holm"] = p
+
+    # One-sided 95% lower bound on manager - Fable 5: how large a deficit the data leave open,
+    # where the permutation test above only answers whether there is a gap at all. Built on the
+    # same per-problem differences that test uses, so the two cannot disagree -- a bound that
+    # clears 0 and a p above .05 would be a contradiction. Pairing over the five passes instead
+    # would shrink the SE from 1.67 to 0.45 by holding the problem set fixed, which drops the
+    # dominant variance component, and its pass-to-pass pairing is arbitrary besides: the two
+    # arms are independent runs, and reordering one arm's passes moves the bound across 0.
+    for s in tested:
+        d = (s["multi_prob"] - ref) * 100
+        s["vs_fable_lo"] = (d.mean()
+                            - t_dist.ppf(0.95, d.size - 1) * d.std(ddof=1) / np.sqrt(d.size))
     return stats
+
+
+# --------------------------------------------------------------------------- table
+
+def score_tex(mean, ci):
+    return "$%.1f \\pm %.1f$" % (mean, (ci[1] - ci[0]) / 2)
+
+
+def p_tex(p, floored=False):
+    """fmt_p_num renders its exponent in unicode superscripts; tabular() does not run
+    the caption escaper over table cells, so the same number is written as math here."""
+    lead = "<" if floored else ""
+    if p >= 1e-3:
+        return "$%s%.2g$" % (lead, p)
+    mantissa, exponent = ("%.1e" % p).split("e")
+    return "$%s%s\\times10^{%d}$" % (lead, mantissa, int(exponent))
+
+
+def stack(top, bottom):
+    return "\\shortstack{%s\\\\%s}" % (top, bottom)
+
+
+# Eight columns of one-line headers run 12pt past \linewidth, and \footnotesize cannot buy
+# that back -- iclr2027_conference.sty defines it as \small. Stacking the two-word headers
+# over two lines does, and keeps the body at a readable size.
+MAIN_HEADER = ("Model", stack("Single", "call"), stack("With", "manager"),
+               stack("$\\Delta$ vs", "single"), "$p$",
+               stack("$\\Delta$ vs", "Fable 5"), stack("95\\%", "bound"), "$p$")
+MAIN_SPEC = ("@{}l" + "@{\\hspace{0.55em}}c" * 2 + "@{\\hspace{0.55em}}r@{\\hspace{0.55em}}c"
+             + "@{\\hspace{0.55em}}r@{\\hspace{0.55em}}r@{\\hspace{0.55em}}c@{}")
+
+
+def main_rows(stats):
+    rows = []
+    for s in stats:
+        if not s["has_mgr"]:
+            rows.append([s["label"], score_tex(s["single"], s["single_ci"]),
+                         "---", "---", "---", "reference", "---", "---"])
+            continue
+        rows.append([s["label"],
+                     score_tex(s["single"], s["single_ci"]),
+                     score_tex(s["multi"], s["multi_ci"]),
+                     "$%+.1f$" % s["delta"], p_tex(s["p_holm"], s["floored"]),
+                     "$%+.1f$" % s["vs_fable"], "$%+.1f$" % s["vs_fable_lo"],
+                     p_tex(s["vs_p_holm"], s["vs_floored"])])
+    return rows
+
+
+TABLES = [(MAIN_HEADER, MAIN_SPEC, main_rows,
+           "\\textbf{Manager vs.\\ single call, five passes.} pass@1 on LCB-100 at a 128k "
+           "cap, reasoning on; $\\pm$ is a 95\\% $t$ interval across the five passes "
+           "(df = 4). $\\Delta$ is in percentage points, against the model's own single "
+           "call and against Fable 5's single call. Each $p$ is a paired sign-flip "
+           "permutation test, unit = problem ($n = 100$), Holm-corrected within its family "
+           "of three; $<$ marks the permutation floor. \\textbf{95\\% bound} is the "
+           "one-sided lower bound on $\\Delta$ vs Fable 5 over the same per-problem "
+           "differences (t, df = 99): the largest deficit the data leave open.")]
 
 
 # --------------------------------------------------------------------------- plot
@@ -143,67 +215,50 @@ def compute():
 def draw(stats, theme="light", save=None):
     t = THEMES[theme]
     apply_theme(t)
-    fig, ax = plt.subplots(figsize=FIGSIZE_H)
+    fig, ax = plt.subplots(figsize=FIGSIZE_V)
     fig.subplots_adjust(**M4)
     n = len(stats)
-    ys = [i * PITCH for i in range(n)]
-    ax.set(xlim=(0, XLIM), ylim=(ys[-1] + 0.62, -1.55))
-    ax.set_xlabel("Accuracy (pass@1, %)", fontsize=FS_BODY, color=t["ink2"],
-                  loc="left")
+    xs = [i * PITCH for i in range(n)]
+    ax.set(xlim=(-0.62, xs[-1] + 0.62), ylim=(0, YLIM))
+    ax.set_ylabel("Accuracy (pass@1, %)", fontsize=FS_BODY, color=t["ink2"],
+                  loc="top")
     ax.xaxis.grid(False)
     ax.yaxis.grid(False)
     ax.set_axisbelow(True)
-    ax.set_yticks([])
-    ax.set_xticks(range(0, 101, 20))
+    ax.set_yticks(range(0, 101, 20))
+    ax.set_xticks(xs)
+    ax.set_xticklabels([XLABELS.get(s["key"], s["label"]) for s in stats],
+                       fontsize=FS_BODY, fontweight="bold", color=t["ink"],
+                       linespacing=1.15)
     ax.tick_params(length=0, labelsize=FS_BODY)
     for spine in ("left", "bottom"):
         ax.spines[spine].set_color(t["axis"])
-    ax.annotate("vs Fable 5", xy=(VS_X, -1.05), ha="left", va="center",
-                fontsize=FS_NOTE, color=t["muted_text"])
 
     fable = next(s for s in stats if s["key"] == "fable")["single"]
-    ax.axvline(fable, ls=(0, (6, 4)), lw=1.6, color=FABLE_DARK, alpha=0.85, zorder=2)
+    ax.axhline(fable, ls=(0, (6, 4)), lw=1.6, color=FABLE_DARK, alpha=0.85, zorder=2)
 
-    for i, s in enumerate(stats):
-        i = ys[int(i)]
-        ax.annotate(s["label"], xy=(0, i - BAR_W), xytext=(0, 3),
-                    textcoords="offset points", ha="left", va="bottom",
-                    fontsize=FS_BODY, fontweight="bold", color=t["ink"])
+    for x, s in zip(xs, stats):
         light, dark = FILLS[s["key"]]
-        arms = [("single", light, BAR_W / 2 if s["has_mgr"] else 0.0)]
+        arms = [("single", light, -BAR_W / 2 if s["has_mgr"] else 0.0)]
         if s["has_mgr"]:
-            arms.append(("multi", dark, -BAR_W / 2))
-        edges = []
-        for arm, fill, dy in arms:
+            arms.append(("multi", dark, BAR_W / 2))
+        for arm, fill, dx in arms:
             v, lo, hi = s[arm], *s[f"{arm}_ci"]
-            y = i + dy
+            xb = x + dx
             bar = palette.bar_kw(s["key"], "manager" if arm == "multi" else "single",
                                  surface=t["surface"])
             bar.setdefault("edgecolor", ring(fill, theme))
-            ax.barh(y, v, BAR_W, linewidth=EDGE_LW, zorder=3, **bar)
-            ax.plot([lo, hi], [y, y], color=ring(fill, theme), lw=CI_LW, zorder=5,
+            ax.bar(xb, v, BAR_W, linewidth=EDGE_LW, zorder=3, **bar)
+            ax.plot([xb, xb], [lo, hi], color=ring(fill, theme), lw=CI_LW, zorder=5,
                     solid_capstyle="round")
             for cap in (lo, hi):
-                ax.plot([cap, cap], [y - 0.045, y + 0.045], color=ring(fill, theme),
+                ax.plot([xb - 0.055, xb + 0.055], [cap, cap], color=ring(fill, theme),
                         lw=CI_LW, zorder=5)
-            ax.annotate(f"{v:.1f}", xy=(hi, y), xytext=(5, 0),
-                        textcoords="offset points", ha="left", va="center",
+            ax.annotate(f"{v:.1f}", xy=(xb, hi), xytext=(0, 5),
+                        textcoords="offset points", ha="center", va="bottom",
                         fontsize=FS_BODY, color=t["ink"], zorder=6,
                         bbox=dict(facecolor=t["surface"], edgecolor="none",
                                   boxstyle="square,pad=0.12"))
-            edges.append(hi)
-        if s["has_mgr"]:
-            x = max(edges) + 13
-            yl, yh = i - BAR_W / 2, i + BAR_W / 2
-            ax.plot([x - 1.6, x, x, x - 1.6], [yl, yl, yh, yh],
-                    color=t["muted"], lw=1.0, solid_joinstyle="miter", zorder=4)
-            ax.annotate(f"{s['delta']:+.1f}  {stars(s['p_holm'])}",
-                        xy=(x, i), xytext=(4, 0), textcoords="offset points",
-                        ha="left", va="center", fontsize=FS_STAR, color=t["ink2"])
-            mark = stars(s["vs_p_holm"]) or "n.s."
-            ax.annotate(f"{s['vs_fable']:+.1f} {mark}",
-                        xy=(VS_X, i), ha="left", va="center", fontsize=FS_NOTE,
-                        color=t["ink2"] if s["vs_p_holm"] < ALPHA else t["muted_text"])
 
     def swatch(colour):
         return Line2D([], [], marker="o", ls="", ms=12, color=colour,

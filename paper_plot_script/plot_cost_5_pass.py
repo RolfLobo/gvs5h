@@ -12,27 +12,37 @@ from matplotlib.patches import Patch
 import palette
 
 from plot_16k_reason_off_5_pass import (
-    ALPHA, CI_LW, EDGE_LW, FIGSIZE, FS_BODY, FS_HEAD, FS_NOTE, FS_TITLE, stars,
+    ALPHA, CI_LW, EDGE_LW, FIGSIZE, FS_BODY, FS_HEAD, FS_NOTE, FS_TITLE,
     MARGINS, PLOTS, THEMES,
     apply_theme, below_panel, boot_ci, fmt_p_num, holm, model_block, pass_ci,
     perm_sign_p, ring, slug, wrap_title, write_figure,
 )
 FILLS = {f"{k}_{arm}": palette.FILLS[k][i]
-         for k in ("q38", "luna", "terra", "fable")
+         for k in ("q38", "q38fn", "luna", "terra", "dsv41", "fable")
          for i, arm in ((0, "single"), (1, "multi"))
          if not (k == "fable" and arm == "multi")}
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 R4 = f"{ROOT}/runs/4models-1pass-reason-on/results"
+FN = f"{ROOT}/runs/q38-fn-5pass/results"
+DS = f"{ROOT}/runs/ds-v41-f-5pass/results"
 TOKENS = os.path.join(ROOT, "runs/per_problem_tokens.json")
 PASSES = [1, 2, 3, 4, 5]
 
 ARMS = {
     "q38_single": ("Qwen3.8-27B, single call",
-                   f"{R4}/q38_single_p%d.cap128k.patched.json", (0.35, 2.75)),
+                   f"{R4}/q38_single_p%d.cap128k.patched.json", (0.214, 2.550)),
     "q38_multi": ("Qwen3.8-27B, with manager",
-                  f"{R4}/q38_multiagent_p%d.patched.json", (0.35, 2.75)),
+                  f"{R4}/q38_multiagent_p%d.patched.json", (0.214, 2.550)),
+    "q38fn_single": ("Qwen3.8-Flash-Next, single call",
+                     f"{FN}/q38_fn_single_p%d.patched.json", (0.150, 0.470)),
+    "q38fn_multi": ("Qwen3.8-Flash-Next, with manager",
+                    f"{FN}/q38_fn_multiagent_p%d.patched.json", (0.150, 0.470)),
+    "dsv41_single": ("DeepSeek-V4.1-Flash, single call",
+                     f"{DS}/ds_v41_f_single_p%d.patched.json", (0.30, 1.20)),
+    "dsv41_multi": ("DeepSeek-V4.1-Flash, with manager",
+                    f"{DS}/ds_v41_f_multiagent_p%d.patched.json", (0.30, 1.20)),
     "luna_single": ("GPT-5.6-Luna, single call",
                     f"{R4}/luna_single_p%d.patched.json", (0.20, 1.20)),
     "luna_multi": ("GPT-5.6-Luna, with manager",
@@ -46,20 +56,28 @@ ARMS = {
                      (10.0, 50.0)),
 }
 CAP = 128_000
+# The Qwen3.8-27B rate, quoted in the rate-sensitivity note below as well as in ARMS.
+QWEN_RATE = (0.214, 2.550)
 
-SOURCES = ("List rates: Qwen3.8-27B \\citep{openrouter2026}, "
+SOURCES = ("List rates: Qwen3.8-27B \\citep{openrouter2026}, Qwen3.8-Flash-Next "
+           "\\citep{openrouter2026flash}, "
            "GPT-5.6-Luna and GPT-5.6-Terra \\citep{openai2026price}, "
-           "Fable~5 \\citep{anthropic2026price}. OpenAI rates are the short-context "
-           "tier and Anthropic's the base rates; no long-context tier, Batch "
-           "discount or prompt-caching multiplier is applied.")
+           "DeepSeek-V4.1-Flash \\citep{deepseek2026price}, "
+           "Fable~5 \\citep{anthropic2026price}. OpenAI uses short-context rates"
+           "and Anthropic and Deepseek use the base rates; no long-context tier, batch/off-peak "
+           "discount, or prompt-caching multiplier is applied. Qwen and DeepSeek rates were read on 2026-09-15.")
 
 TOK_KEY = {"q38_single": "q38_single"}
 
 TESTS = [
     ("q38_single", "q38_multi", "Qwen3.8-27B: manager $-$ single"),
+    ("q38fn_single", "q38fn_multi", "Qwen3.8-Flash-Next: manager $-$ single"),
+    ("dsv41_single", "dsv41_multi", "DeepSeek-V4.1-Flash: manager $-$ single"),
     ("luna_single", "luna_multi", "GPT-5.6-Luna: manager $-$ single"),
     ("terra_single", "terra_multi", "GPT-5.6-Terra: manager $-$ single"),
     ("q38_multi", "fable_single", "Fable 5 single $-$ Qwen3.8-27B manager"),
+    ("q38fn_multi", "fable_single", "Fable 5 single $-$ Qwen3.8-Flash-Next manager"),
+    ("dsv41_multi", "fable_single", "Fable 5 single $-$ DeepSeek-V4.1-Flash manager"),
     ("luna_multi", "fable_single", "Fable 5 single $-$ GPT-5.6-Luna manager"),
     ("terra_multi", "fable_single", "Fable 5 single $-$ GPT-5.6-Terra manager"),
     ("luna_multi", "terra_single", "GPT-5.6-Terra single $-$ GPT-5.6-Luna manager"),
@@ -69,13 +87,14 @@ RATE_RANGE = ((0.33, 2.40), (0.45, 3.20))
 
 BAR_W = 0.38
 PITCH = 1.5
-X = {"fable_single": 0.0,
-     "q38_multi": PITCH - BAR_W / 2, "q38_single": PITCH + BAR_W / 2,
-     "terra_multi": 2 * PITCH - BAR_W / 2, "terra_single": 2 * PITCH + BAR_W / 2,
-     "luna_multi": 3 * PITCH - BAR_W / 2, "luna_single": 3 * PITCH + BAR_W / 2}
-XLIMC = (0, 95)
+X = {"fable_single": 0.0}
+for _i, _mk in enumerate(("q38", "q38fn", "terra", "luna", "dsv41"), start=1):
+    X[f"{_mk}_multi"] = _i * PITCH - BAR_W / 2
+    X[f"{_mk}_single"] = _i * PITCH + BAR_W / 2
+# The old right-hand column of significance marks sat at x = 82; with it gone the axis only
+# has to clear Fable 5's bar at $61.11 plus its price and pass@1 labels.
+XLIMC = (0, 80)
 XTICKS = [0, 20, 40, 60]
-VS_X = 82
 
 TITLE = ("What one pass costs — LCB-100, 5 passes, "
          "single call vs manager, against Fable 5")
@@ -89,38 +108,26 @@ CAPTION = ("\\textbf{The scaffold's bill.} Cost of one pass over the same 100 pr
            "discount is "
            "taken, and Qwen3.8-27B is priced at OpenRouter market rates. The top bar of "
            "each pair is the manager, dark; the single call is under it, light; all are at "
-           "a 128k output cap, and hatch is the model. The "
-           "right-hand column tests each top bar against Fable 5's single call "
-           "(Welch per run, $n=5$ vs "
-           "5; Holm-corrected across seven comparisons): * $p<.05$, ** $p<.01$, "
-           "*** $p<.001$.")
+           "a 128k output cap, and hatch is the model. "
+           "Table~\\ref{tab:cost} carries the tests.")
 
 
 def money(v):
     return f"\\${v:.2f}" if v >= 0.1 else f"\\${v:.3f}"
 
 
-def arm_short(key, arm):
-    return (f"{arm['label'].split(',')[0]} "
-            f"{'single' if key.endswith('single') else 'manager'}")
-
-
 def notes(stats):
+    # The per-comparison p-values live in Table~\ref{tab:cost} now, not here.
     a, t = stats["arms"], stats["tests"]
     shown = lambda k: round(a[k]["mean"], 2)
     cross = next(x for x in t if x["a"] == "luna_multi" and x["b"] == "terra_single")
-    within = [x for x in t if x["b"] != "fable_single" and x is not cross]
-    worst = max(x["p_pass_holm"] for x in within)
     return [
-        f"Unbracketed comparisons: each manager $-$ single increase is significant "
-        f"({fmt_p_tex(worst)} or better per run, "
-        f"{fmt_p_tex(within[0]['p_prob_holm'], within[0]['floored'])} per problem); "
+        f"Unbracketed comparisons: every manager $-$ single increase is significant, and "
         f"GPT-5.6-Luna's manager undercuts GPT-5.6-Terra's single call by "
-        f"\\${shown(cross['b']) - shown(cross['a']):.2f} "
-        f"({fmt_p_tex(cross['p_pass_holm'])} per run, "
-        f"{fmt_p_tex(cross['p_prob_holm'], cross['floored'])} per problem).",
-        f"At {stats['crossover']:.2f}x the assumed Qwen rate (\\${0.35 * stats['crossover']:.3f}/"
-        f"\\${2.75 * stats['crossover']:.2f} per MTok, inside the spread across hosted "
+        f"\\${shown(cross['b']) - shown(cross['a']):.2f}.",
+        f"At {stats['crossover']:.2f}x the assumed Qwen rate "
+        f"(\\${QWEN_RATE[0] * stats['crossover']:.3f}/"
+        f"\\${QWEN_RATE[1] * stats['crossover']:.2f} per MTok, inside the spread across hosted "
         f"providers) the manager's cost advantage over Fable 5 disappears entirely — a "
         f"larger uncertainty than any p-value here.",
     ]
@@ -150,6 +157,13 @@ def compute():
             per_problem=cost.mean(axis=0),
             acc=100 * passed.mean(), per_solve=cost.sum() / passed.sum(),
         )
+        if key == "q38_single":
+            # What the same generations would have billed at the 250k cap they were made
+            # under, before the 128k cap-match this table prices them at.
+            raw = np.array(tok[key]["tokens"], float)
+            arms[key]["cost_asgen"] = (
+                ((raw[:, :, 0] + raw[:, :, 2]) * ri
+                 + (raw[:, :, 1] + raw[:, :, 3]) * ro) / 1e6).sum(axis=1).mean()
 
     from scipy import stats as sps
     tests = []
@@ -171,10 +185,14 @@ def compute():
     return dict(arms=arms, tests=tests, crossover=crossover)
 
 
-RATE_HEADER = ("Arm", "Rate \\$/MTok in / out", "In (MTok)", "Out (MTok)",
-               "\\$/pass", "\\$/solved")
-RATE_SPEC = ("@{}l@{\\hspace{0.7em}}l@{\\hspace{0.7em}}r@{\\hspace{0.7em}}r"
-             "@{\\hspace{0.7em}}r@{\\hspace{0.7em}}r@{}")
+# The rate header is the widest cell in its column; stacking it recovers the ~26pt the two
+# new p columns cost.
+RATE_HEADER = ("Arm", "\\shortstack{Rate \\$/MTok\\\\in / out}", "In (MTok)", "Out (MTok)",
+               "\\$/pass", "\\$/solved",
+               "\\shortstack{$p$ vs\\\\single}", "\\shortstack{$p$ vs\\\\Fable 5}")
+RATE_SPEC = ("@{}l@{\\hspace{0.5em}}l@{\\hspace{0.5em}}r@{\\hspace{0.5em}}r"
+             "@{\\hspace{0.5em}}r@{\\hspace{0.5em}}r@{\\hspace{0.5em}}c"
+             "@{\\hspace{0.5em}}c@{}")
 
 TABLE_HEADER = ("Comparison", "$\\Delta$ \\$/pass",
                 "$p$ (per pass, $n=5$)", "$p$ (per problem, $n=100$)")
@@ -193,13 +211,33 @@ def rate_tex(v):
     return f"\\${v:g}" if v == int(v) else f"\\${v:.2f}"
 
 
+def arm_short(key, arm):
+    # Model over arm rather than side by side: on one line the longest names
+    # ("DeepSeek-V4.1-Flash manager") set this column wide enough to push the table past
+    # \linewidth. Stacked, the column is only as wide as the longest model name.
+    return ("\\shortstack[l]{%s\\\\%s}"
+            % (arm["label"].split(",")[0],
+               "single" if key.endswith("single") else "manager"))
+
+
 def rate_rows(stats):
+    def p_of(a, b):
+        tst = next((t for t in stats["tests"] if (t["a"], t["b"]) == (a, b)), None)
+        return "---" if tst is None else fmt_p_tex(tst["p_pass_holm"])
+
     rows = []
     for key, arm in stats["arms"].items():
         ri, ro = arm["rate"]
+        mk, armname = key.rsplit("_", 1)
+        if key == "fable_single":
+            p_single, p_fable = "---", "reference"
+        elif armname == "multi":
+            p_single, p_fable = p_of(f"{mk}_single", key), p_of(key, "fable_single")
+        else:
+            p_single, p_fable = "---", "---"
         rows.append((arm_short(key, arm), f"{rate_tex(ri)} / {rate_tex(ro)}",
                      f"{arm['mtok_in']:.4f}", f"{arm['mtok_out']:.4f}",
-                     money(arm["mean"]), money(arm["per_solve"])))
+                     money(arm["mean"]), money(arm["per_solve"]), p_single, p_fable))
     return rows
 
 
@@ -211,10 +249,30 @@ def table_rows(stats):
             for t in stats["tests"]]
 
 
-TABLES = [(RATE_HEADER, RATE_SPEC, rate_rows,
-           "\\textbf{What one pass cost each arm.} List rate $\\times$ the tokens it "
-           "consumed."),
-          ]
+def rate_caption(stats):
+    arms = stats["arms"]
+    q = arms["q38_single"]
+    cheap_k, cheap = min(arms.items(), key=lambda kv: kv[1]["mean"])
+    best_k, best = max(arms.items(), key=lambda kv: kv[1]["acc"])
+    return (
+        "\\textbf{What one pass cost each arm.} List rate $\\times$ the tokens it "
+        "consumed. The two $p$ columns test each manager arm against its own single call "
+        "and against Fable 5's single call: Welch over the five passes, Holm-corrected "
+        f"across {len(TESTS)} comparisons. Qwen3.8-27B's single arm is the 128k cap-matched "
+        f"one; at 250k it costs {money(q['cost_asgen'])}/pass. "
+        f"Retried and discarded attempts are counted: they "
+        "were generated and would be billed. "
+        f"The cheapest arm is {arms[cheap_k]['label'].split(',')[0]} "
+        f"{'manager' if cheap_k.endswith('multi') else 'single'} at "
+        f"{money(cheap['mean'])} a pass and the most accurate is "
+        f"{arms[best_k]['label'].split(',')[0]} "
+        f"{'manager' if best_k.endswith('multi') else 'single'} at "
+        f"{money(best['mean'])} --- a {best['mean'] / cheap['mean']:.0f}$\\times$ spread in "
+        f"price for {best['acc'] - cheap['acc']:+.1f} points."
+    )
+
+
+TABLES = [(RATE_HEADER, RATE_SPEC, rate_rows, rate_caption)]
 
 
 # --------------------------------------------------------------------------- plot
@@ -226,7 +284,7 @@ def draw(stats, theme="light", save=None):
     fig.subplots_adjust(**COST_MARGINS)
     arms = stats["arms"]
 
-    ax.set(xlim=XLIMC, ylim=(3 * PITCH + 0.62, -1.55))
+    ax.set(xlim=XLIMC, ylim=(max(X.values()) + 0.62 + BAR_W / 2, -1.55))
     ax.set_yticks([])
     ax.set_xlabel("Cost of one pass (USD)", fontsize=FS_BODY, color=t["ink2"],
                   loc="left")
@@ -237,8 +295,6 @@ def draw(stats, theme="light", save=None):
     ax.set_xticks(XTICKS, [f"\\${v:g}" for v in XTICKS])
     for spine in ("left", "bottom"):
         ax.spines[spine].set_color(t["axis"])
-    ax.annotate("vs Fable 5", xy=(VS_X, -1.05), ha="left", va="center",
-                fontsize=FS_NOTE, color=t["muted_text"])
 
     for mk in ("q38", "luna", "terra", "fable"):
         y0 = X[f"{mk}_single"] - (BAR_W / 2 if f"{mk}_multi" in FILLS else 0)
@@ -265,13 +321,6 @@ def draw(stats, theme="light", save=None):
                     xytext=(5 + 0.62 * FS_BODY * (len(price) - 1), 0),
                     textcoords="offset points", ha="left", va="center",
                     fontsize=FS_NOTE, color=t["muted_text"])
-
-    vs_fable = [x for x in stats["tests"] if x["b"] == "fable_single"]
-    for x_t in vs_fable:
-        mark = stars(x_t["p_pass_holm"]) or "n.s."
-        ax.annotate(mark, xy=(VS_X, X[x_t["a"]]),
-                    ha="left", va="center", fontsize=FS_NOTE,
-                    color=t["ink2"] if x_t["p_pass_holm"] < ALPHA else t["muted_text"])
 
     ax.annotate("Same 100 problems, 5 passes per condition; bars are the mean pass,\n"
                 "CI across the 5; the figure after each bar is its pass@1.",

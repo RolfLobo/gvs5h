@@ -16,6 +16,10 @@ ARMS = {
     "luna_multi": f"{ROOT}/runs/4models-1pass-reason-on/results/luna_multiagent_p%d.json",
     "terra_single": f"{ROOT}/runs/4models-1pass-reason-on/results/terra_single_p%d.json",
     "terra_multi": f"{ROOT}/runs/4models-1pass-reason-on/results/terra_multiagent_p%d.json",
+    "q38fn_single": f"{ROOT}/runs/q38-fn-5pass/results/q38_fn_single_p%d.json",
+    "q38fn_multi": f"{ROOT}/runs/q38-fn-5pass/results/q38_fn_multiagent_p%d.json",
+    "dsv41_single": f"{ROOT}/runs/ds-v41-f-5pass/results/ds_v41_f_single_p%d.json",
+    "dsv41_multi": f"{ROOT}/runs/ds-v41-f-5pass/results/ds_v41_f_multiagent_p%d.json",
 }
 
 

@@ -35,14 +35,17 @@ FIGURES = [
          "Dashed = single call, solid = with manager; the block under each tick gives that model's "
          "$\\Delta$ and Tukey group, and the legend each arm's gain from the smallest model to the largest."),
     dict(mod=p4new, out="fig-4new-5pass.tex", tukey=False, panels=("bars",), half=True,
-         label="fig:main",
+         table=True, tex_notes=True, label="fig:main", tables_label="tab:main",
+         tables_out="tab-4new-5pass.tex",
          captions=("Accuracy per condition, with 95\\% CIs across the 5 passes.",
                    "Accuracy per condition, with 95\\% CIs across the 5 passes.")),
     dict(mod=pcvs, out="fig-cost-vs-score.tex", tukey=False, panels=("dots",),
          label="fig:cost-vs-score",
-         captions=("Cost against accuracy, all seven pinned-backend arms.", "")),
+         captions=("Cost against accuracy, all eleven pinned-backend arms.", "")),
+    # [!t]: the cost table is the first thing Section 3.2 refers to, so it belongs at the top
+    # of the page rather than floated to the bottom like the appendix tables.
     dict(mod=pcost, out="fig-cost.tex", tukey=False, table=True, half=True,
-         label="fig:cost", tables_label="tab:cost",
+         label="fig:cost", tables_label="tab:cost", tables_where="[!t]",
          tables_out="fig-cost-tables.tex"),
 ]
 
@@ -207,21 +210,28 @@ def table_figure_tex(fig, stats):
         "% The caption text and the table numbers live in that chart's plot script;\n"
         "% re-run the script to update this file.\n")
     env = "chartfigure" if fig.get("half") else "figure"
+    # A bars-only entry writes <stem>_bars_light.pdf, the same split figure_tex makes.
+    stem = slug(mod.TITLE) + ("_bars" if "bars" in fig.get("panels", ()) else "")
     figure = (
         f"\\begin{{{env}}}\n"
         "\\centering\n"
         f"\\{'halfplot' if fig.get('half') else 'panelplot'}"
-        f"{{\\plotdir/{slug(mod.TITLE)}_light.pdf}}\n"
+        f"{{\\plotdir/{stem}_light.pdf}}\n"
+        # pcost writes its notes as LaTeX already; p4new writes them as plain text, the
+        # same as the modules figure_tex serves, so only the latter wants the escaper.
         f"\\caption{{{fig.get('caption', mod.CAPTION)} "
-        + " ".join(mod.notes(stats)) + "}\n"
+        + " ".join(tex(n) if fig.get("tex_notes") else n for n in mod.notes(stats))
+        + "}\n"
         f"\\label{{{fig['label']}}}\n"
         f"\\end{{{env}}}\n")
     tables = "\n".join(
-        "\\begin{table}[!hb]\n"
+        f"\\begin{{table}}{fig.get('tables_where', '[!hb]')}\n"
         + ("" if i == 0 else "\\vspace*{2ex}\n")
         + "\\centering\n"
-        "\\small\n"
-        f"\\caption{{{cap}}}\n"
+        # \footnotesize is no help here -- iclr2027_conference.sty defines it as \small.
+        f"\\{fig.get('tables_size', 'small')}\n"
+        # A caption may be a plain string or, where it quotes numbers, a function of stats.
+        f"\\caption{{{cap(stats) if callable(cap) else cap}}}\n"
         f"\\label{{{fig['tables_label']}{'' if i == 0 else i}}}\n"
         + tabular(header, spec, rows(stats))
         + (sources(mod) if i == 0 else "") +

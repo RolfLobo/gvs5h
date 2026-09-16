@@ -13,6 +13,8 @@ RUN_DIRS = {
     "16k-reasoning-off-5pass": "runs/16k-reasoning-off-5pass/results",
     "firstparty-128k-reasoning-on-5pass": "runs/firstparty-128k-reasoning-on-5pass/results",
     "fable5-128k-reasoning-on-5pass": "runs/fable5-128k-reasoning-on-5pass/results",
+    "q38-fn-5pass": "runs/q38-fn-5pass/results",
+    "ds-v41-f-5pass": "runs/ds-v41-f-5pass/results",
 }
 
 
@@ -22,9 +24,15 @@ def main():
     for run, arms in data.items():
         base = os.path.join(ROOT, RUN_DIRS[run])
         for arm, rec in arms.items():
+            # The older runs were graded once, then re-graded into a .regraded.json twin, and the
+            # patched file is built on top of that. Runs added later skip that step: rescore.py
+            # writes their verdicts straight into patched_verdicts.json, so the raw result is the
+            # base. Either way the verdicts applied below are the same ones.
             src = os.path.join(base, f"{arm}.regraded.json")
             if not os.path.exists(src):
-                print(f"  no regraded twin, skipping: {run}/{arm}")
+                src = os.path.join(base, f"{arm}.json")
+            if not os.path.exists(src):
+                print(f"  no result to patch, skipping: {run}/{arm}")
                 skipped += 1
                 continue
             blob = json.load(open(src))
