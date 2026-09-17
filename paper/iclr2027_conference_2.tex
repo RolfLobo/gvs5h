@@ -51,7 +51,7 @@ Improves Coding in Language Models}
 \maketitle
 
 \begin{abstract}
-Frontier coding performance is typically attained with large, costly, proprietary models. We introduce ledger-based zero-shot self-orchestration (GVS5H), a training-free method in which fresh instances of one model decompose problems and coordinate through a shared file system. 
+Frontier coding performance is typically attained with large, costly proprietary models. We introduce ledger-based zero-shot self-orchestration (GVS5H), a training-free method in which fresh instances of one model decompose problems and coordinate through a shared file system. 
 Across nine open and closed-weight models on the 100 latest hard LiveCodeBench problems, 
 the method yields as much as 23.2 points improvement, boosting several cheaper models to frontier-level performance. 
 Orchestrated Qwen3.8 Flash Next scores 93.0\% against Fable 5's 90.4\% at 9\% of the cost, while the smaller Qwen3.8-27B reaches 92.4\%. 
@@ -293,24 +293,18 @@ In many cases, the manager arm of a cheaper model can have a lower cost than a s
 \subsection{The effect of truncation}
 \label{sec:truncation}
 
-Empty solutions are automatic fails, so any condition that emits fewer of them gains pass@1
-without solving more problems. Per-call \texttt{finish\_reason} separates that channel from
-genuine problem-solving exactly (Table~\ref{tab:caps}). Neither GPT-5.6 model truncates or
-emits an empty answer across all 2{,}000 of their problem-passes, so their $\Delta$s in the
-pinned-backend set carry no rescue component. The channel is largest on Qwen3.8-27B, and even
-there a cut-off rate is not a loss rate: most truncated generations still contain a complete
-solution, written inside the reasoning stream before the cap arrived and recovered from there
-by the extractor. Of the single arm's 35 empty cells (Table~\ref{tab:emitted}), the manager
-solves 28, fails 7 and leaves none empty, worth 5.6 points, about a quarter of its gain --- a
-cut-off worker costs a round rather than the answer. Served locally at a 262{,}144-token context, Qwen3.8-27B's
-single arm was in fact generated at 250k and cap-matched to 128k afterwards
-(Appendix~\ref{app:protocol}); read at its original 250k cap it gains a little more, by
-shrinking the truncation tail rather than lifting the run (Table~\ref{tab:qwen-caps}). That
-reading is exploratory, cap-matched to nothing else in the paper, so it cannot carry a
-$\Delta$ against the manager arm. Re-scoring each single arm over only the problem-passes
-where it emitted code bounds the effect model by model (Table~\ref{tab:emitted}); Fable 5
+Each model generation is cut off once its thinking and output exceeds the token limit. In the manager case, a new, fresh round is started. In the single call run or the final call of a manager run, if no valid code was generated before the cutoff, the task is marked as a fail. Table~\ref{tab:caps} shows the frequency of these truncations.
+
+\input{tab-caps}
+
+
+Cap hits are rare across all models except the Qwen3.8 family, especially Qwen3.8-27b. Many runs that reached the cutoff still contained a complete solution earlier in its output or reasoning.
+Of the single arm's 35 empty cells, the manager
+solves 28, fails 7 and leaves none empty, worth 5.6 points. To investigate the effect of the cap, Qwen3.8-27B's
+single arm was allowed to generate up to 250k tokens. This higher limit resulted in only a slight score increase (Table~\ref{tab:caps}). Re-scoring each single arm over only the problem-passes
+where it emitted code bounds the effect model by model. Fable 5
 gains 1.6 points there, six of its nine empty cells being safety refusals rather than
-truncations (Section~\ref{sec:discussion}).
+truncations.
 
 \subsection{The OpenRouter-served model set}
 \label{sec:openrouter}
@@ -319,26 +313,13 @@ The five models below were served through the OpenRouter gateway and run on the 
 scaffold, so they are not directly comparable to the pinned-backend arms above.
 Table~\ref{tab:openrouter} collects every condition.
 
-\paragraph{Reasoning on.} Opus-5 tops the study at $88 \to 95$, its $+7$ seven problems gained
-and none lost (Table~\ref{tab:openrouter}). The largest gains come from the smaller models (Figure~\ref{fig:scale-bars}a):
-ordered by scale, the single curve rises further than the manager curve, so the scaffold
-narrows the spread across model sizes (Figure~\ref{fig:scale-on}, which plots the same numbers
-against parameter count).
+\paragraph{Reasoning on:} Opus-5 scores at $88$ single $\to 95$ manager, the highest of all tested scenarios. However, smaller models tend gains more from the manager (Figure~\ref{fig:scale-bars}a).
 
 \paragraph{Reasoning off.} We ran five independent
 passes per condition at a 16k cap plus a one-pass 128k control. Run-to-run spread across the
-five passes is small. The manager effect is significant for three
-of four models, and a Tukey HSD separates Kimi-K3 from all three others and MiniMax-M3 from
-Qwen3.6-35B; Qwen3.5-9B sits between those two and separates from neither
-(Figure~\ref{fig:scale-bars}b; Figure~\ref{fig:scale-16k} by scale).
-
-The 128k control largely eliminates truncation and reproduces the ordering
-(Figure~\ref{fig:scale-bars}c). Empty output is not fully removed --- single-arm emit rates
-(non-empty completions) run below the manager's throughout, so part of the gap at the small
-end remains an emit-rate effect --- but it cannot explain Kimi-K3, where a 4-point emit gap
-accompanies a score gap ten times larger and neither of its arms truncates here at all. Unlike
-the reasoning-on setting, the single and manager curves diverge here
-(Figure~\ref{fig:scale-off}), though the two settings span different model sets.
+five passes is small. Kimi 
+(Figure~\ref{fig:scale-bars}b; Figure~\ref{fig:scale-16k} by scale). The 128k control largely eliminates truncation and reproduces the ordering
+(Figure~\ref{fig:scale-bars}c) (Figure~\ref{fig:scale-off}).
 
 \section{Discussion}
 \label{sec:discussion}
@@ -397,64 +378,27 @@ behind sampling-and-voting and debate \citep{li2024,du2023}. Second, verificatio
 of trust: the manager currently accepts a worker's report on the basis of a sanity check against
 the problem's own samples, so a confidently-wrong solution propagates unchecked and can overwrite
 a correct intermediate answer. Running each candidate against a generated test suite before
-acceptance would catch regressions of this kind, at the cost of extra calls.
+acceptance would catch regressions of this kind.
 
 \subsection{Limitations}
 \label{sec:limitations}
 
 \begin{itemize}
-  \item \textbf{Serving-provider reliability (OpenRouter-served set only).} The five models of
-  that set ran through OpenRouter's multi-provider routing, a substantial and
-  time-varying confound: providers intermittently stalled, dropped the response
-  mid-stream, returned error objects, clamped output below the requested cap, or returned
-  reasoning-only replies. An attempt with no usable completion is scored a failure, so its
-  pass@1 counts infrastructure failures as wrong answers --- a conservative lower bound, and not
-  exactly reproducible, since it depends on provider health at run time. Both arms draw on the
-  same provider pool, so the single-vs-manager comparison is less sensitive to this than the
-  absolute levels are. This confound is what motivated the pinned-backend set, which is why
-  those arms and not the OpenRouter sweep carry the paper's headline claims.
+  \item Five models ran through OpenRouter's multi-provider routing. OpenRouter does
+  not guarantee one quantization or build per model. Many providers also intermittently stalled, dropped the response
+  mid-stream, returned error objects, cut off output below the requested cap, or returned
+  reasoning-only replies, resulting in a time-varying confound.
 
-  \item \textbf{Provider-served weights may vary (OpenRouter-served set only).} OpenRouter does
-  not guarantee one quantization or build per model, adding a second, smaller source of
-  run-to-run variation on top of decoding temperature. The headline arms are pinned to one
-  backend each, and the locally served Qwen3.8-27B to a specific FP8 checkpoint.
+  \item Only one pass was run for the reasoning-on and 128k
+  reasoning-off comparisons to limit API cost, so their results are a point estimate only.
 
-  \item \textbf{Single pass in the OpenRouter-served set.} The reasoning-on and 128k
-  reasoning-off comparisons there are one pass per condition, to limit API cost, so their deltas
-  are point estimates within the ${\sim}4.5$ percentage points of pass-to-pass variation the 16k
-  five-pass runs show on a manager-minus-single delta; per-model significance rests on those
-  five-pass runs. It is also why Opus-5's $88 \to 95$ (Table~\ref{tab:openrouter}), the highest
-  score in the paper, remains a point estimate rather than a measured effect.
+  \item Fable 5 was run single-only due to its high cost, so it is unknown how much improvement its manager arm would gain.
 
-  \item \textbf{Fable 5 has no manager arm.} It was run single-only, so the strongest
-  single-call result in the paper is also the one condition where we cannot say what the scaffold
-  would do.
+  \item Fable 5
+  returned \texttt{stop\_reason=refusal} on 6 of 500 problem-passes, resulting in a slight score reduction of 0-1.2 points.
 
-  \item \textbf{Refusals are scored as failures, and only one arm can incur them.} Fable 5
-  returned \texttt{stop\_reason=refusal} on 6 of 500 problem-passes, spread over three ordinary
-  competitive-programming problems and never deterministic. We deliberately configure no fallback
-  model, since a cell labeled Fable 5 must contain Fable 5's outcome, but the consequence is that
-  its score carries ${\sim}1.2$ points of classifier penalty no other arm is exposed to, as
-  variance rather than a constant offset. Comparisons against Fable 5 are therefore mildly
-  conservative in its disfavor.
-
-  \item \textbf{Qwen3.8-27B's 128k single arm is a replay, not an independent run.} Those
-  generations were produced at 250k and truncated to 128k after the fact
-  (Appendix~\ref{app:protocol}). It is the right comparison for isolating the cap --- identical
-  generations either side; we report the as-generated 250k reading
-  alongside it (Section~\ref{sec:truncation}).
-
-  \item \textbf{A 9B model with reasoning on was untestable.} Qwen3.5-9B with reasoning enabled
-  could not be evaluated in any configuration we tried: through OpenRouter it generates unbounded
-  reasoning and returns reasoning-only replies or truncates before an answer appears, and no token
-  or effort setting fixed it; locally the checkpoint refused batching, leaving zero completed
-  calls. We report it as a model limitation rather than a data point, and it bounds how small a
-  ``reasoning'' model this scaffold can be applied to.
-
-  \item \textbf{One benchmark family.} All reported results are competitive-programming code
-  generation. Math and knowledge benchmarks (AIME, MATH-500, GPQA, HLE) were run in exploratory
-  form but are not reported: on a probe of the ten hardest problems in each, the frontier models
-  sit at or near ceiling, leaving little headroom in which to measure a scaffold effect.
+  \item All results are based on code
+  generation. Math and knowledge benchmarks (AIME, MATH-500, GPQA, HLE) exploratored but abandoned due to saturation at near perfect scores.
 \end{itemize}
 
 \section{Conclusion}
@@ -477,17 +421,17 @@ for model scale.
 
 \subsection*{AI use statement}
 
-In this work, we used generative AI tools as the object of study: every experimental result is a
+In this work, we used generative artificial intelligence as the object of study: every experimental result is a
 measurement of language-model output, produced by the scaffold and baselines described in
-Section~\ref{sec:method} and released with the code. Separately, generative AI tools assisted
-with writing and editing the manuscript, with implementing the orchestration harness and the
-analysis and plotting scripts, and with literature search. We did not use generative AI tools to
+Section~\ref{sec:method} and released with the code. Separately, generative language-model based tools assisted
+with reviewing the manuscript, with writing the AI use, Ethics, and Reproducibility Statements, with implementing the orchestration harness and the
+analysis and plotting scripts, and with literature search. We did not use generative artificial intelligence tools to
 generate, impute or alter any experimental result, and all reported numbers are computed by the
-released scripts directly from the stored run outputs. We have reviewed all AI-assisted work: the
+released scripts directly from the stored run outputs. We have reviewed all artificial intelligence-assisted work: the
 harness and analysis code was read and tested by the authors, the corrected evaluator of
 Appendix~\ref{app:evaluator} was found and verified by manual inspection of transcripts, and every
 citation was checked against its primary source. We take responsibility for the final content of
-this work, including text, claims and artifacts produced with the aid of generative AI.
+this work, including text, claims and artifacts produced with the aid of generative artificial intelligence.
 
 \subsection*{Ethics statement}
 
@@ -641,45 +585,7 @@ not a wash across a leaderboard --- it silently penalizes the models whose style
 
 \input{fig-cost}
 
-\begin{table}[htbp]
-\centering
-\caption{\textbf{Cap hits and empty solutions per arm.} Single (s) / manager (m), out of 500
-problem-passes each. A \emph{cap hit} is a graded generation that reached the token limit
-(\texttt{finish\_reason=length}): the single arm's one call, and for the manager its final answer
-call only --- internally 108 of its 3{,}235 calls also hit the cap, 95 of them workers, which the
-loop absorbs. \emph{No code} is a problem-pass that ended with nothing the extractor could grade.}
-\label{tab:caps}
-\small
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\textbf{Model} & \textbf{Cap hits s / m} & \textbf{No code s / m} &
-\textbf{of which refusals} & \textbf{Cap} \\
-\midrule
-GPT-5.6-Terra  & 0 / 0            & 0 / 0          & 0 & 128k\textsuperscript{b} \\
-GPT-5.6-Luna   & 0 / 0            & 0 / 0          & 0 & 128k\textsuperscript{b} \\
-Qwen3.8-27B    & \textbf{150} / 5 & \textbf{35} / 0 & 0 & 128k\textsuperscript{a} \\
-Claude Fable 5 & 3 / --           & 9 / --         & \textbf{6} & 128k\textsuperscript{b} \\
-\bottomrule
-\end{tabular}
-
-\vspace{0.6ex}
-\begin{minipage}{0.92\linewidth}
-\footnotesize
-\textsuperscript{a}~Every count in this table is at a 128k cap, so the rows are like-for-like.
-Qwen3.8-27B's manager arm ran natively at 128k; its single arm was run at 250k and is counted here
-cap-matched back to 128k. The 250k counts are given in Table~\ref{tab:qwen-caps}.\\
-\textsuperscript{b}~A hard ceiling rather than a chosen setting: the GPT-5.6 family and
-Fable 5 both cap a synchronous API response at 128k output tokens (Appendix~\ref{app:protocol}), so
-for these three arms a truncation cannot be relieved by raising the cap. Qwen3.8-27B, served
-locally, has no such ceiling --- which is why its single arm could be run at 250k at all.
-\end{minipage}
-\end{table}
-
 \input{tab-agreement}
-
-\input{tab-qwen-caps}
-
-\input{tab-emitted}
 
 \input{tab-openrouter}
 
