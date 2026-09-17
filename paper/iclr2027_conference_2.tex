@@ -51,18 +51,12 @@ Improves Coding in Language Models}
 \maketitle
 
 \begin{abstract}
-Frontier coding performance is typically bought with larger proprietary models at high
-cost. We introduce ledger-based zero-shot self-orchestration, a training-free method in
-which fresh instances of one model decompose problems and coordinate through a shared
-filesystem holding a plan, notes and current solution. Across nine open and closed-weight
-models on the 100 latest hard LiveCodeBench problems, the method yields gains as much as
-23.2 percentage points and boosts two cheaper models to frontier-level
-performance. Orchestrated GPT-5.6-Terra reaches 88.0\% pass@1 against
-Fable 5's 90.4\% at 19\%
-of the cost, and locally served, open-weight Qwen3.8-27B rises from 69.2\% to 92.4\%. Gains
-are not universal: some models are unchanged or worse. Transcript analysis attributes the
-gain to decomposition and persistent context. Inference-time organization can approach
-frontier coding accuracy at a fraction of the cost, or on self-hostable weights.
+Frontier coding performance is typically attained with large, costly, proprietary models. We introduce ledger-based zero-shot self-orchestration (GVS5H), a training-free method in which fresh instances of one model decompose problems and coordinate through a shared file system. 
+Across nine open and closed-weight models on the 100 latest hard LiveCodeBench problems, 
+the method yields as much as 23.2 points improvement, boosting several cheaper models to frontier-level performance. 
+Orchestrated Qwen3.8 Flash Next scores 93.0\% against Fable 5's 90.4\% at 9\% of the cost, while the smaller Qwen3.8-27B reaches 92.4\%. 
+Gains are not universal: some models are unchanged or worse. Transcript analysis attributes the gain to decomposition and persistent context. 
+Inference-time organization can reach or exceed frontier coding accuracy at a fraction of the cost on self-hostable weights.
 \end{abstract}
 
 \section{Introduction}
