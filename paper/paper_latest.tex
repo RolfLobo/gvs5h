@@ -348,7 +348,7 @@ of the full history. The workspace is external memory that the token cap cannot 
 That matters because a generation left to run to a very large cap does not merely risk being
 cut off; it can degrade the model. Eight of the Qwen3.8-27B single calls became unstable during reasoning and
 used up the full 250k budget without emitting code --- on \texttt{abc399\_e},
-the model repeated the phrase "\texttt{Alphabet 5 with a<->b,c<->d,e->e fixed, and one letter? no.}" 7{,}743 times.
+the model repeated the phrase "\texttt{Alphabet 5 with a<->b, c<->d, e<->e fixed, and one letter? no.}" 7{,}743 times.
 This is the mechanism behind the otherwise odd finding of Section~\ref{sec:truncation} that most
 cut-off generations still contain a complete solution: the model had reached an answer and
 then talked past the cap re-checking it. Bounding each call keeps the work far from the cap and
