@@ -228,7 +228,7 @@ def table_figure_tex(fig, stats):
         f"\\begin{{table}}{fig.get('tables_where', '[!hb]')}\n"
         + ("" if i == 0 else "\\vspace*{2ex}\n")
         + "\\centering\n"
-        # \footnotesize is no help here -- iclr2027_conference.sty defines it as \small.
+        # \footnotesize is no help here -- paper_conference.sty defines it as \small.
         f"\\{fig.get('tables_size', 'small')}\n"
         # A caption may be a plain string or, where it quotes numbers, a function of stats.
         f"\\caption{{{cap(stats) if callable(cap) else cap}}}\n"

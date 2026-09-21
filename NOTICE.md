@@ -25,12 +25,13 @@ files next to it (`plan.md`, `notes.md`, `tasks.json`, `solution.py`, `answer.md
 are covered by CC BY 4.0.
 
 **LaTeX template files.** These files in `paper/` are the conference template and its
-dependencies, redistributed unmodified under their own terms:
+dependencies, redistributed under their own terms. Their contents are unmodified; the first
+two have been renamed, as noted:
 
 | File | Source | License |
 |---|---|---|
-| `iclr2027_conference.sty` | ICLR 2027 author kit, adapted by Hugo Larochelle from the NeurIPS style file | No license stated; distributed by ICLR for author use |
-| `iclr2027_conference.bst` | ICLR author kit, from `icml2010.bst` (Copyright 2010 Hal Daumé III) and `plainnat.bst` (Copyright 1993-2007 Patrick W Daly) | [LPPL](https://www.latex-project.org/lppl/) 1 or later |
+| `paper_conference.sty` (renamed from `iclr2027_conference.sty`) | ICLR 2027 author kit, adapted by Hugo Larochelle from the NeurIPS style file | No license stated; distributed by ICLR for author use |
+| `paper_conference.bst` (renamed from `iclr2027_conference.bst`) | ICLR author kit, from `icml2010.bst` (Copyright 2010 Hal Daumé III) and `plainnat.bst` (Copyright 1993-2007 Patrick W Daly) | [LPPL](https://www.latex-project.org/lppl/) 1 or later |
 | `natbib.sty` | [natbib](https://ctan.org/pkg/natbib), Copyright 1993-2009 Patrick W Daly | [LPPL](https://www.latex-project.org/lppl/) 1 or later |
 | `fancyhdr.sty` | [fancyhdr](https://ctan.org/pkg/fancyhdr) 3.2, Piet van Oostrum | [LPPL](https://www.latex-project.org/lppl/) 1 or later |
 

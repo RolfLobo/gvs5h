@@ -1,6 +1,6 @@
 \documentclass{article}
 
-\usepackage{iclr2027_conference,times}
+\usepackage{paper_conference,times}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -50,7 +50,7 @@ Improves Coding in Language Models}
 
 \maketitle
 
-% Not an ICLR submission. iclr2027_conference.sty sets the venue line as \lhead inside
+% Not an ICLR submission. paper_conference.sty sets the venue line as \lhead inside
 % \@maketitle, so it can only be cleared after \maketitle has run; the rest of the template
 % (fonts, title block, section style, figure sizing) is kept.
 \lhead{}
@@ -176,7 +176,7 @@ characters, so neither grows without bound across rounds.
 % Without this break the paragraph starts three lines above the page break and Figure 1, which
 % defers to the top of the next page, lands between its two halves. Breaking here puts the whole
 % paragraph below the figure. \newpage rather than \pagebreak: under the \flushbottom of
-% iclr2027_conference.sty, \pagebreak stretches the short page's glue instead of leaving the gap.
+% paper_conference.sty, \pagebreak stretches the short page's glue instead of leaving the gap.
 \newpage
 \paragraph{Baseline.} The single-call baseline is the same model given the same problem in exactly one call, with no
 workspace, loops, or other roles. The single call receives the solver
@@ -492,7 +492,7 @@ on acceptance.
 \fi
 
 \bibliography{references}
-\bibliographystyle{iclr2027_conference}
+\bibliographystyle{paper_conference}
 
 \appendix
 

@@ -1,5 +1,10 @@
 # GVS5H: Five Qwen3.8-27B Models Match Claude Fable 5 on LiveCodeBench Hard
-### Gvs5H: Gorilla vs. 5 Humans
+### GVS5H: Gorilla vs. 5 Humans
+
+<div align="center">
+<img src="assets/gvs5h-mark.png" alt="Five small monkeys stacked one on another, together as tall as a single gorilla beside them" width="300"/>
+</div>
+
 <div align="center">
 <a href="https://trendshift.io/repositories/225068?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-225068" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/225068/daily?language=Python" alt="slee-persis%2FGVS5H | Trendshift" width="250" height="55"/></a>
 </div>
@@ -12,7 +17,7 @@
 
 > **Abstract.** Frontier coding performance is typically bought with larger proprietary models at high cost. We introduce ledger-based zero-shot self-orchestration, a training-free method in which fresh instances of one model decompose problems and coordinate through a shared filesystem holding a plan, notes and current solution. Across eleven open and closed-weight models on the 100 latest hard LiveCodeBench problems, the method yields gains of up to 25.6 percentage points on pinned backends and offers two routes to frontier-level accuracy. Orchestrated Qwen3.8 Flash Next reaches 93.0% pass@1 against Fable 5's 90.4% at 9% of the cost, and locally served, open-weight Qwen3.8-27B rises from 66.8% to 92.4%. Gains are not universal: some models are unchanged or worse. Transcript analysis attributes the gain to decomposition and persistent context. Inference-time organization can approach frontier coding accuracy at a fraction of the cost, or slightly exceed it on self-hostable weights.
 >
-> — [the paper](paper/iclr2027_conference_latest.pdf)
+> — [the paper](paper/paper_latest.pdf)
 
 ## Running the code
 

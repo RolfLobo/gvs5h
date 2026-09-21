@@ -174,7 +174,7 @@ def stack(top, bottom):
 
 
 # Eight columns of one-line headers run 12pt past \linewidth, and \footnotesize cannot buy
-# that back -- iclr2027_conference.sty defines it as \small. Stacking the two-word headers
+# that back -- paper_conference.sty defines it as \small. Stacking the two-word headers
 # over two lines does, and keeps the body at a readable size.
 MAIN_HEADER = ("Model", stack("Single", "call"), stack("With", "manager"),
                stack("$\\Delta$ vs", "single"), "$p$",
