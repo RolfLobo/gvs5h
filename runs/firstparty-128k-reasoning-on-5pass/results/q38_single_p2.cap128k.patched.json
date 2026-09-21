@@ -3,7 +3,7 @@
   "model": "groq:small-model",
   "lcb": {
     "benchmark": "livecodebench",
-    "pass@1": 71.0,
+    "pass@1": 68.0,
     "records": [
       {
         "question_id": "arc196_b",
@@ -26,7 +26,7 @@
         "truncated_calls": null,
         "n_calls": null,
         "ws": "/home/persis/model-test/escalation/runs/4models-1pass-reason-on/ws/q38_single_p2/e964cc4e890d",
-        "passed": true,
+        "passed": false,
         "cap_matched_to": 128000,
         "passed_before_regrade": true
       },
@@ -346,7 +346,7 @@
         "truncated_calls": null,
         "n_calls": null,
         "ws": "/home/persis/model-test/escalation/runs/4models-1pass-reason-on/ws/q38_single_p2/1ca95127b010",
-        "passed": true,
+        "passed": false,
         "cap_matched_to": 128000,
         "passed_before_regrade": true
       },
@@ -1146,7 +1146,7 @@
         "truncated_calls": null,
         "n_calls": null,
         "ws": "/home/persis/model-test/escalation/runs/4models-1pass-reason-on/ws/q38_single_p2/6845ae76b1c5",
-        "passed": true,
+        "passed": false,
         "cap_matched_to": 128000,
         "passed_before_regrade": true
       },

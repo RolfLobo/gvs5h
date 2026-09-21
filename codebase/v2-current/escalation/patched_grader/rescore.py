@@ -120,7 +120,15 @@ def main():
         old, old_src = lcb["pass@1"], "raw"
         if os.path.exists(rg):
             try:
-                old, old_src = json.load(open(rg))["lcb"]["pass@1"], "regraded"
+                # Take the RECORDS from the regraded twin too, not just its pass@1. For most
+                # arms the twin only adds fail->pass moves this script would rediscover, so
+                # reading the base was harmless; for the cap-matched arms it is not, because
+                # there regrade.py scored different code (the 128k-truncated solution), and
+                # basing the verdicts on the 250k file silently reinstates 13 passes for
+                # solutions that no longer exist at the matched cap.
+                twin = json.load(open(rg))
+                old, old_src = twin["lcb"]["pass@1"], "regraded"
+                lcb = twin["lcb"]
             except Exception:
                 pass
         arms[arm] = {"file": f, "run": run, "name": name, "model": d.get("model"),

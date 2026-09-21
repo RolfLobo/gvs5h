@@ -94,10 +94,10 @@ def build(data):
 
 CAPTION = r"""\textbf{LCB-100 pass@1 (\%), single $\to$ manager.} For the OpenRouter-served models on the
 original scaffold. ``--'' = not run; Qwen3.5-9B reasoning-on returns reasoning-only replies and is
-unusable. Scores are from the patched grader (Section~\ref{sec:setup}): the four LCB-100 problems
+unusable. Scores are from the corrected grader (Appendix~\ref{app:evaluator}): the four LCB-100 problems
 whose reference answer is not unique are judged by the original contest rule, and submissions run
 as real subprocesses so \texttt{sys.stdout.buffer} behaves as it does on the contest judge. A
-bolded delta clears the ${\sim}4.5$ point pass-to-pass band. The seven pinned-backend, five-pass
+bolded delta clears the ${\sim}4.5$ point pass-to-pass band. The eleven pinned-backend, five-pass
 arms are reported separately in Section~\ref{sec:results} and are not pooled here, because both the
 serving path and the scaffold version differ (Section~\ref{sec:setup})."""
 

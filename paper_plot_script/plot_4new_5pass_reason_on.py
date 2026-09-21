@@ -205,7 +205,7 @@ TABLES = [(MAIN_HEADER, MAIN_SPEC, main_rows,
            "(df = 4). $\\Delta$ is in percentage points, against the model's own single "
            "call and against Fable 5's single call. Each $p$ is a paired sign-flip "
            "permutation test, unit = problem ($n = 100$), Holm-corrected within its family "
-           "of three; $<$ marks the permutation floor. \\textbf{95\\% bound} is the "
+           "of five; $<$ marks the permutation floor. \\textbf{95\\% bound} is the "
            "one-sided lower bound on $\\Delta$ vs Fable 5 over the same per-problem "
            "differences (t, df = 99): the largest deficit the data leave open.")]
 

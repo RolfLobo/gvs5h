@@ -52,8 +52,8 @@ Improves Coding in Language Models}
 
 \begin{abstract}
 Frontier coding performance is typically attained with large, costly proprietary models. We introduce ledger-based zero-shot self-orchestration (GVS5H), a training-free method in which fresh instances of one model decompose problems and coordinate through a shared file system. 
-Across nine open and closed-weight models on the 100 latest hard LiveCodeBench problems, 
-the method yields as much as 23.2 points improvement, boosting several cheaper models to frontier-level performance. 
+Across eleven open and closed-weight models on the 100 latest hard LiveCodeBench problems,
+the method yields as much as 25.6 points improvement, boosting several cheaper models to frontier-level performance. 
 Orchestrated Qwen3.8 Flash Next scores 93.0\% against Fable 5's 90.4\% at 9\% of the cost, while the smaller Qwen3.8-27B reaches 92.4\%. 
 Gains are not universal: some models are unchanged or worse. Transcript analysis attributes the gain to decomposition and persistent context. 
 Inference-time organization can reach or exceed frontier coding accuracy at a fraction of the cost on self-hostable weights.
@@ -62,20 +62,20 @@ Inference-time organization can reach or exceed frontier coding accuracy at a fr
 \section{Introduction}
 \label{sec:intro}
 
-Large language models (LLMs) are increasingly deployed not as single responses to a prompt. Instead, they are wrapped in a scaffolds that perform multiple model calls, often interlaced with planing, tool calling, note taking,
-and revision over multiple turns, on the intuition that a decomposing a problem and making incremental progress should beat an attempt at answering everything in one pass.
+Large language models (LLMs) are increasingly deployed not as single responses to a prompt. Instead, they are wrapped in a scaffold that performs multiple model calls, often interlaced with planning, tool calling, note taking,
+and revision over multiple turns, on the intuition that decomposing a problem and making incremental progress should beat an attempt at answering everything in one pass.
 
 In this paper, we test and quantify this intuition by measuring the performance of a single model call against a basic system consisting of multiple alternating orchestration and execution calls (manager and worker roles). Each call has a new context and communicates through a shared filesystem, with no access to additional tools.
  
 We call the method studied here zero-shot self-orchestration (GVS5H): the orchestrator is neither trained for orchestration nor
-given task-specific demonstrations of how to decompose or coordinate the problem. Every model role being the same model in a fresh context
+given task-specific demonstrations of how to decompose or coordinate the problem. Every model role is the same model in a fresh context
 with a short generic prompt. This scaffold is further described in Section~\ref{sec:method}.
 
 \subsection{Related work}
 \label{sec:related}
 
 Our test uses existing proprietary and open-weight language models, and what
-we vary is the coordination layer above it. Prior systems differ mainly in how that layer is
+we vary is the coordination layer above them. Prior systems differ mainly in how that layer is
 decided. One line trains the coordinator: Fugu \citep{sakana2026} learns to assemble
 and direct a pool of expert workers per query, and Conductor \citep{nielsen2025} is a 7B
 model RL-trained to design worker communication topologies; earlier query routers learn to
@@ -197,7 +197,7 @@ a prompt are unbounded rather than capped.
 \paragraph{Benchmark.} LiveCodeBench code-generation, release\_v6 \citep{jain2024}: the 100
 most recent problems in the hard split by contest date, which limits training-data
 contamination \citep{jain2024}. We refer to this set as LCB-100. Solutions are graded by
-LiveCodeBench's own hidden-test evaluator, after the correction described in
+LiveCodeBench's own hidden-test evaluator, after the two corrections described in
 Appendix~\ref{app:evaluator}; every number below is post-correction. The verifier of step 5
 runs only stdin-format public tests, which 73 of the 100 problems carry; the other 27 are
 LeetCode-style, with call-based public tests the engine does not run, so those get no verifier
@@ -213,11 +213,11 @@ weights, served by the first-party DeepSeek API), MiniMax-M3 \citep{minimax2026}
 ${\sim}16$ of 896 experts active per token), and the closed frontier models Opus-5
 \citep{anthropic2026}, the two GPT-5.6 variants Terra and Luna \citep{openai2026}, and Claude
 Fable 5 \citep{anthropic2026}, all four of undisclosed size. Serving splits the set in two.
-The six pinned-backend models are served on one fixed backend for v2 comparison: Terra and
-Luna by the OpenAI API, Qwen3.8-27B and Qwen3.8-Flash-Next by our own vLLM,
-DeepSeek-V4.1-Flash by the first-party DeepSeek API, Fable 5 by the
-Anthropic Messages API; because gateway routing proved the dominant source of run-to-run
-noise (Section~\ref{sec:discussion}). The five OpenRouter-served models ran through a
+The six pinned-backend models are each served on one fixed backend for v2 comparison, because
+gateway routing proved the dominant source of run-to-run noise (Section~\ref{sec:discussion}):
+Terra and Luna by the OpenAI API, Qwen3.8-27B and Qwen3.8-Flash-Next by our own vLLM,
+DeepSeek-V4.1-Flash by the first-party DeepSeek API, and Fable 5 by the
+Anthropic Messages API. The five OpenRouter-served models ran through a
 single OpenAI-compatible gateway on the original scaffold, and are reported separately in
 Section~\ref{sec:openrouter} because both the serving path and the scaffold version differ.
 Fable 5 was run single-only, so it contributes no manager delta.
@@ -281,7 +281,7 @@ Figure~\ref{fig:cost-vs-score} plots price against accuracy: every model's manag
 call, and costs more. On average, the number of output tokens increases to about 3x baseline.
  
 \textbf{The base cost varies across models.} A single-call pass on Qwen3.8-27B emits more
-than twenty times the output tokens of either OpenAI model. The total cost depends on the model's reasoning tendancies in addition to its per-token rate and scaffold.
+than twenty times the output tokens of either OpenAI model. The total cost depends on the model's reasoning tendencies in addition to its per-token rate and scaffold.
 
 \paragraph{Comparisons along the frontier.}
 In many cases, the manager arm of a cheaper model can have a lower cost than a single call to an expensive model, while providing a higher accuracy. Most notably, Qwen3.8-Flash-Next scores at or above Fable 5 for a tenth of the price. Qwen3.8-27B also edges ahead of Fable 5 for a slightly lower price, with a much lower hardware requirement to host locally. Within the GPT-5.6 family, GPT-5.6-Luna with a manager matches GPT-5.6-Terra’s single call on accuracy at under half the price, making a clear case for spending on the scaffold rather than the model.
@@ -293,17 +293,18 @@ In many cases, the manager arm of a cheaper model can have a lower cost than a s
 \subsection{The effect of truncation}
 \label{sec:truncation}
 
-Each model generation is cut off once its thinking and output exceeds the token limit. In the manager case, a new, fresh round is started. In the single call run or the final call of a manager run, if no valid code was generated before the cutoff, the task is marked as a fail. Table~\ref{tab:caps} shows the frequency of these truncations.
+Each model generation is cut off once its thinking and output exceed the token limit. In the manager case, a new, fresh round is started. In the single call run or the final call of a manager run, if no valid code was generated before the cutoff, the task is marked as a fail. Table~\ref{tab:caps} shows the frequency of these truncations.
 
 \input{tab-caps}
 
 
-Cap hits are rare across all models except the Qwen3.8 family, especially Qwen3.8-27b. Many runs that reached the cutoff still contained a complete solution earlier in its output or reasoning.
+Cap hits are rare across all models except the Qwen3.8 family, especially Qwen3.8-27B. Many runs that reached the cutoff still contained a complete solution earlier in their output or reasoning.
 Of the single arm's 35 empty cells, the manager
 solves 28, fails 7, and leaves none empty, worth 5.6 points. To investigate the effect of the cap, Qwen3.8-27B's
-single arm was allowed to generate up to 250k tokens. This higher limit resulted in only a slight score increase (Table~\ref{tab:caps}). Re-scoring each single arm over only the problem-passes
+single arm was allowed to generate up to 250k tokens. This higher limit raised the score by 3.2
+points, to 70.0 (Table~\ref{tab:qwen-caps}). Re-scoring each single arm over only the problem-passes
 where it emitted code bounds the effect model by model. Fable 5
-gains 1.6 points there, six of its nine empty cells being safety refusals rather than
+gains 1.7 points there, six of its nine empty cells being safety refusals rather than
 truncations.
 
 \subsection{The OpenRouter-served model set}
@@ -313,11 +314,11 @@ The five models below were served through the OpenRouter gateway and run on the 
 scaffold, so they are not directly comparable to the pinned-backend arms above.
 Table~\ref{tab:openrouter} collects every condition.
 
-\paragraph{Reasoning on:} Opus-5 scores at $88$ single $\to 95$ manager, the highest of all tested scenarios. However, smaller models tend gains more from the manager (Figure~\ref{fig:scale-bars}a).
+\paragraph{Reasoning on:} Opus-5 scores at $88$ single $\to 95$ manager, the highest of all tested scenarios. However, smaller models tend to gain more from the manager (Figure~\ref{fig:scale-bars}a).
 
 \paragraph{Reasoning off.} We ran five independent
 passes per condition at a 16k cap plus a one-pass 128k control. Run-to-run spread across the
-five passes is small. Kimi 
+five passes is small. Kimi-K3 exhibits a particularly large gain, $+31.6$ points
 (Figure~\ref{fig:scale-bars}b; Figure~\ref{fig:scale-16k} by scale). The 128k control largely eliminates truncation and reproduces the ordering
 (Figure~\ref{fig:scale-bars}c) (Figure~\ref{fig:scale-off}).
 
@@ -397,16 +398,16 @@ acceptance would catch regressions of this kind.
   returned \texttt{stop\_reason=refusal} on 6 of 500 problem-passes, resulting in a slight score reduction of 0-1.2 points.
 
   \item All results are based on code
-  generation. Math and knowledge benchmarks (AIME, MATH-500, GPQA, HLE) exploratored but abandoned due to saturation at near perfect scores.
+  generation. Math and knowledge benchmarks (AIME, MATH-500, GPQA, HLE) were explored but abandoned due to saturation at near perfect scores.
 \end{itemize}
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-The GVS5H scaffold improves the coding accuracy of each pinned-backend model ran in both arms. These results provide a baseline against which more complex systems involving heterogeneous models or code verification can be compared.
+The GVS5H scaffold improves the coding accuracy of each pinned-backend model run in both arms. These results provide a baseline against which more complex systems involving heterogeneous models or code verification can be compared.
 The scaffold, despite increasing token use and hence cost compared to a model's single call, often remains
 cheaper than frontier models while providing a higher accuracy. Transcript analysis
-attributes the gain to decomposition and to context that persists across calls.   The result is conditional - some configurations result no improvement or regression. However, in many cases, the orchestration is a cost-effective substitute for model scale.
+attributes the gain to decomposition and to context that persists across calls.   The result is conditional - some configurations result in no improvement or regression. However, in many cases, the orchestration is a cost-effective substitute for model scale.
 
 
 \subsection*{AI use statement}
@@ -429,9 +430,9 @@ This work involves no human subjects, no personal data and no new dataset releas
 set is the public hard split of LiveCodeBench release\_v6 \citep{jain2024}. Two points bear
 on research integrity. First, one arm returned safety refusals that our protocol scores as
 failures (Section~\ref{sec:limitations}); we report the rate rather than substituting a fallback
-model, so a cell labeled with a model contains that model's outcome. Second, we report a defect in
-a widely used public evaluation harness (Appendix~\ref{app:evaluator}) and the corrected
-re-scoring of every number, rather than only the numbers that favor our method. The method itself
+model, so a cell labeled with a model contains that model's outcome. Second, we report two defects in
+a widely used public evaluation harness and its answer keys (Appendix~\ref{app:evaluator}) and the
+corrected re-scoring of every number, rather than only the numbers that favor our method. The method itself
 is a general-purpose inference-time scaffold for code generation and inherits the dual-use profile
 of the underlying models; it lowers the cost of capable code generation, which applies to
 beneficial and to harmful code alike.
@@ -442,7 +443,7 @@ Section~\ref{sec:method} specifies the manager--worker loop and its guards;
 Section~\ref{sec:setup} and Appendix~\ref{app:protocol} give
 the benchmark selection, the per-role temperatures, the serving path and provider settings per model, the output caps and
 pass counts, the instrumentation, and the cap-matching replay procedure for Qwen3.8-27B's single
-arm. Appendix~\ref{app:evaluator} documents the evaluator defect and the fix, without which the
+arm. Appendix~\ref{app:evaluator} documents both evaluator defects and their fixes, without which the
 reported numbers cannot be reproduced from the stored generations. The statistical procedures are
 given in Section~\ref{sec:setup}. Two sources of irreducibility are stated in
 Section~\ref{sec:limitations}: decoding temperature is non-zero, and the OpenRouter-served arms
@@ -532,20 +533,26 @@ matter:
 
   \item \textbf{The cap is invisible to the model, which is what makes the replay exact.} This arm
   ran on our own vLLM, where \texttt{max\_tokens} is enforced by the server: it never enters the
-  prompt, and generation simply cuts off at the limit (124 of the 500 calls end at
-  \texttt{finish\_reason=length}) abruptly rather than wound up. Nor is this local to vLLM: making a
+  prompt, and generation simply cuts off at the limit, abruptly rather than winding up (124 of the
+  500 calls end at \texttt{finish\_reason=length}). Nor is this local to vLLM: making a
   budget visible to a model takes a separate, opt-in mechanism such as Anthropic's
   \texttt{task\_budget}, while \texttt{max\_tokens} stays an enforced ceiling that truncates the
   response \citep{anthropic2026effort}. The replay therefore does not differ from a genuine re-run
   at 128k.
 \end{itemize}
 
-\section{A correction to the LiveCodeBench evaluator}
+\section{Two corrections to the LiveCodeBench evaluator}
 \label{app:evaluator}
 
-While inspecting transcripts for Section~\ref{sec:discussion} we found a defect in the
-LiveCodeBench harness itself, and every number in Section~\ref{sec:results} is reported after
-fixing it. The evaluator does not run a candidate as a subprocess; it executes it in-process with
+While inspecting transcripts for Section~\ref{sec:discussion} we found two defects in the grading
+path: one in the LiveCodeBench harness, one in its answer keys. Every number in
+Section~\ref{sec:results} is reported after fixing both; no model was re-run.
+Table~\ref{tab:regrade} gives every reported arm as the stock evaluator graded it and after each
+correction. Neither correction is a constant offset, and the larger of the two is the answer keys
+for some models and the harness for others.
+
+\paragraph{The \texttt{sys.stdin} mock.} The evaluator does not run a candidate as a subprocess;
+it executes it in-process with
 \texttt{sys.stdin} replaced by a mock. That mock's binary view implemented \texttt{readline()} as
 \texttt{inputs.split(b"\textbackslash n")[0]} --- a stateless expression that returns the
 first line on every call. A program reading multi-line input through
@@ -554,21 +561,55 @@ was. The mock's text-mode \texttt{sys.stdin.readline} was implemented as a prope
 \texttt{buffer.read()} returns the whole payload, so neither was affected, which is why the
 common \texttt{sys.stdin.buffer.read().split()} idiom never exposed it. We replaced the mock's
 binary view with one backed by a \texttt{BytesIO} so that reads advance a position, and re-scored
-every stored generation; no model was re-run.
+every stored generation.
 
 We report it explicitly for two reasons. First, it interacts badly with the v2 verifier: that step
 runs the candidate as a real subprocess (step 5 of Section~\ref{sec:method}), where
 \texttt{buffer.readline()} works correctly, so the manager was told its solution passed the public
 samples for programs the grader then marked wrong --- the loop's one external signal certifying a
-wrong answer. Second, the exposure is uneven across models rather than a constant offset: 311 of the
-3{,}456 pinned-backend outputs containing code use the idiom, and 97\% of those were scored wrong
-against 20\% for the outputs that do not. Fable 5 never uses it and its scores are unchanged to the
+wrong answer. Second, the exposure is uneven across models rather than a constant offset: 371 of the
+5{,}425 pinned-backend outputs containing code use the idiom, and 86\% of those were scored wrong
+against 18\% for the outputs that do not. Fable 5 never uses it and its scores are unchanged to the
 decimal. The OpenRouter-served set reaches for it once in 5{,}012 generations containing code, and
 then through an alias --- Kimi-K3's single call on \texttt{abc396\_g} binds
 \texttt{sys.stdin.buffer} to a name and calls \texttt{readline()} on that. Every OpenRouter-served
-number is re-scored all the same, and one cell moves: Kimi-K3's 128k reasoning-on single
-arm, from 82 to 83. Because the idiom is a matter of coding style, a harness bug of this shape is
-not a wash across a leaderboard --- it penalizes the models whose style trips it.
+number is re-scored all the same, and the repaired mock moves one cell: Kimi-K3's 128k
+reasoning-on single arm, from 82 to 83 (Table~\ref{tab:regrade}, where that cell reaches its
+reported 86 through the answer-key correction below). Because the idiom is a matter of coding
+style, a harness bug of this shape is not a wash across a leaderboard --- it penalizes the models
+whose style trips it, and the $\Delta$ harness column of Table~\ref{tab:regrade} ranges from
+$+0.0$ for Fable 5, which never writes it, to $+12.6$ for GPT-5.6-Terra's manager arm.
+
+\paragraph{Answer keys that accept one of many valid answers.} LiveCodeBench grades by exact
+string match against a single stored output. Four LCB-100 problems accept more than one:
+\texttt{abc396\_e}, \texttt{arc190\_a} and \texttt{arc195\_c} ask for any construction that
+attains the optimum, and \texttt{abc385\_f} asks for a real number, which its contest accepts
+within a relative $10^{-6}$. We judge those four by the rule their contest used. Each of the three
+constructive problems gets a checker that parses the submitted answer, tests it against the
+problem's own constraints, and requires it to attain the objective value of the stored reference:
+for \texttt{abc396\_e}, that the sequence is non-negative, satisfies every XOR constraint and sums
+to what the reference sums to; for \texttt{arc190\_a}, that the chosen operations cover $1..N$ and
+number what the reference says is optimal; for \texttt{arc195\_c}, that the Yes/No verdict matches
+the reference and that any placement offered uses the requested counts of each colour, on distinct
+cells, with every consecutive pair a step of the kind its colour allows. \texttt{abc385\_f} is
+compared token by token at $10^{-6}$ relative tolerance. This class of defect is one LiveCodeBench documents upstream --- its errata
+list eleven earlier problems whose keys accept multiple answers, none of them in LCB-100 --- and
+it is a property of the benchmark, not of any model, so it applies to every arm of both sets and
+moves 104 of their 118 arm-passes. Re-judging
+runs each submission as a real subprocess rather than in-process, which is also what repairs the
+mock above and makes \texttt{sys.stdout.buffer} write as it does on the contest judge.
+
+Both corrections are conservative in the same two ways. They re-run only the submissions the stock
+evaluator marked wrong, so neither can turn a pass into a failure and every move in
+Table~\ref{tab:regrade} raises a score rather than lowering one; and among those they re-run only
+the ones with a known reason to be misjudged --- a failure on one of the four problems above, or
+code that touches \texttt{sys.stdin.buffer} or \texttt{sys.stdout.buffer}. A submission that the
+in-process evaluator failed for some other reason keeps that verdict. Re-executing every stored
+generation instead, passing and failing alike, finds 25 further submissions across 11{,}800
+records that pass every hidden test as a subprocess; they are spread over 22 arms, at most three
+to an arm, and we leave them as the stock evaluator scored them.
+
+\input{tab-regrade}
 
 \section{Additional results}
 \label{app:results}

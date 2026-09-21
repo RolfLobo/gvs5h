@@ -63,8 +63,8 @@ SOURCES = ("List rates: Qwen3.8-27B \\citep{openrouter2026}, Qwen3.8-Flash-Next 
            "\\citep{openrouter2026flash}, "
            "GPT-5.6-Luna and GPT-5.6-Terra \\citep{openai2026price}, "
            "DeepSeek-V4.1-Flash \\citep{deepseek2026price}, "
-           "Fable~5 \\citep{anthropic2026price}. OpenAI uses short-context rates"
-           "and Anthropic and Deepseek use the base rates; no long-context tier, batch/off-peak "
+           "Fable~5 \\citep{anthropic2026price}. OpenAI uses short-context rates "
+           "and Anthropic and DeepSeek use the base rates; no long-context tier, batch/off-peak "
            "discount, or prompt-caching multiplier is applied. Qwen and DeepSeek rates were read on 2026-09-15.")
 
 TOK_KEY = {"q38_single": "q38_single"}

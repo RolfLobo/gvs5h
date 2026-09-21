@@ -183,7 +183,7 @@ def main():
     caps = qwen_caps()
     write("tab-qwen-caps.tex",
           r"\textbf{Qwen3.8-27B's single arm read at both caps.} Cap-matched to 128k, and as "
-          r"generated at 250k. Scores are from the patched grader (Section~\ref{sec:setup}); "
+          r"generated at 250k. Scores are from the corrected grader (Appendix~\ref{app:evaluator}); "
           r"$\pm$ is a 95\% $t$ interval across the five passes.",
           "tab:qwen-caps",
           r"\textbf{Qwen3.8-27B single} & \textbf{pass@1} & \textbf{Cut off by the cap} &"
@@ -191,7 +191,7 @@ def main():
     emit = emitted_table()
     write("tab-emitted.tex",
           r"\textbf{Each single arm re-scored} over only the problem-passes where it emitted "
-          r"code. Scores are from the patched grader (Section~\ref{sec:setup}).",
+          r"code. Scores are from the corrected grader (Appendix~\ref{app:evaluator}).",
           "tab:emitted",
           r"\textbf{Model (single arm)} & \textbf{As scored} & \textbf{Emitted code} &"
           "\n" r"\textbf{Restricted to those} \\", emit)

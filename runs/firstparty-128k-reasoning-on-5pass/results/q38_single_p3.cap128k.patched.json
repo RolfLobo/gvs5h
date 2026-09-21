@@ -347,7 +347,7 @@
         "truncated_calls": null,
         "n_calls": null,
         "ws": "/home/persis/model-test/escalation/runs/4models-1pass-reason-on/ws/q38_single_p3/1ca95127b010",
-        "passed": false,
+        "passed": true,
         "cap_matched_to": 128000,
         "passed_before_regrade": false
       },
@@ -373,7 +373,7 @@
         "truncated_calls": null,
         "n_calls": null,
         "ws": "/home/persis/model-test/escalation/runs/4models-1pass-reason-on/ws/q38_single_p3/7525cd8db268",
-        "passed": true,
+        "passed": false,
         "cap_matched_to": 128000,
         "passed_before_regrade": true
       },
