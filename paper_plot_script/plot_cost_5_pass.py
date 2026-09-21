@@ -87,10 +87,6 @@ RATE_RANGE = ((0.33, 2.40), (0.45, 3.20))
 
 BAR_W = 0.38
 PITCH = 1.5
-X = {"fable_single": 0.0}
-for _i, _mk in enumerate(("q38", "q38fn", "terra", "luna", "dsv41"), start=1):
-    X[f"{_mk}_multi"] = _i * PITCH - BAR_W / 2
-    X[f"{_mk}_single"] = _i * PITCH + BAR_W / 2
 # The old right-hand column of significance marks sat at x = 82; with it gone the axis only
 # has to clear Fable 5's bar at $61.11 plus its price and pass@1 labels.
 XLIMC = (0, 80)
@@ -107,8 +103,9 @@ CAPTION = ("\\textbf{The scaffold's bill.} Cost of one pass over the same 100 pr
            "Table~\\ref{tab:cost} is the arithmetic behind every bar. No cached-input "
            "discount is "
            "taken, and Qwen3.8-27B is priced at OpenRouter market rates. The top bar of "
-           "each pair is the manager, dark; the single call is under it, light; all are at "
-           "a 128k output cap, and hatch is the model. "
+           "each pair is the single call, light; the manager is under it, dark; all are at "
+           "a 128k output cap, and hatch is the model. Models run top to bottom from the "
+           "cheapest single call to the dearest, with Fable 5 last. "
            "Table~\\ref{tab:cost} carries the tests.")
 
 
@@ -284,6 +281,16 @@ def draw(stats, theme="light", save=None):
     fig.subplots_adjust(**COST_MARGINS)
     arms = stats["arms"]
 
+    models = sorted((k.rsplit("_", 1)[0] for k in arms if k.endswith("_single")),
+                    key=lambda mk: (mk == "fable", arms[f"{mk}_single"]["mean"]))
+    X = {}
+    for i, mk in enumerate(models):
+        y = i * PITCH
+        paired = f"{mk}_multi" in arms
+        X[f"{mk}_single"] = y - BAR_W / 2 if paired else y
+        if paired:
+            X[f"{mk}_multi"] = y + BAR_W / 2
+
     ax.set(xlim=XLIMC, ylim=(max(X.values()) + 0.62 + BAR_W / 2, -1.55))
     ax.set_yticks([])
     ax.set_xlabel("Cost of one pass (USD)", fontsize=FS_BODY, color=t["ink2"],
@@ -296,10 +303,9 @@ def draw(stats, theme="light", save=None):
     for spine in ("left", "bottom"):
         ax.spines[spine].set_color(t["axis"])
 
-    for mk in ("q38", "luna", "terra", "fable"):
-        y0 = X[f"{mk}_single"] - (BAR_W / 2 if f"{mk}_multi" in FILLS else 0)
+    for mk in models:
         ax.annotate(arms[f"{mk}_single"]["label"].split(",")[0],
-                    xy=(0, y0 - BAR_W), xytext=(0, 3),
+                    xy=(0, X[f"{mk}_single"] - BAR_W / 2), xytext=(0, 3),
                     textcoords="offset points", ha="left", va="bottom",
                     fontsize=FS_BODY, fontweight="bold", color=t["ink"])
 
