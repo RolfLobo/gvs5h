@@ -90,9 +90,9 @@ so every problem flows through the same pipeline
 \citep{wu2023} instead supply configurable conversable agents and leave the conversation
 pattern open; Trinity \citep{xu2025} sits at the boundary with the first, fixing a
 three-role workflow but learning which model fills each role. A third coordinates through a
-shared store rather than a pipeline --- ARIADNE \citep{wei2026} pairs a blackboard with MCTS
+shared store rather than a pipeline - ARIADNE \citep{wei2026} pairs a blackboard with MCTS
 on program generation, LbMAS \citep{han2025} mediates all communication through a global
-board --- or decentralizes entirely, through debate \citep{du2023} or sampling and voting
+board - or decentralizes entirely, through debate \citep{du2023} or sampling and voting
 \citep{li2024}; Mixture-of-Agents \citep{wangj2024a} instead aggregates in layers. A
 separate line asks not how coordination is decided but whether reported gains survive
 equalizing test-time compute \citep{wangj2024b,tran2026}.
@@ -102,7 +102,7 @@ second. The manager is a fixed prompt with no learning, which lets us ask how mu
 orchestration benefit is available without training, and when it materializes. The list of tasks is dynamically generated and updated throughout the problem solving process rather than predetermined.
 Its workspace is a shared store like ARIADNE's blackboard, but coordination is done by the manager
 rather than through MCTS, reward models, or learned search policies. We do not attempt
-an equal-token comparison across the same model --- the loop necessarily spends more than a single call. 
+an equal-token comparison across the same model - the loop necessarily spends more than a single call. 
 Instead, we ask whether that spend buys better solutions, and whether it is more cost-effective than moving to a larger model.
 
 \section{Method}
@@ -126,29 +126,29 @@ Workers never talk to each other; each sees the ledger plus the one task the man
 assigns. The control flow (Figure~\ref{fig:loop}) is:
 
 \begin{enumerate}
-  \item \textbf{Manager --- plan.} The manager reads the problem and writes a 3--6 sentence
+  \item \textbf{Manager - plan.} The manager reads the problem and writes a 3--6 sentence
   strategy plus 3--6 concrete seed tasks.
 
-  \item \textbf{Worker --- brainstorm.} The first worker does not write a
+  \item \textbf{Worker - brainstorm.} The first worker does not write a
   solution; it identifies the core difficulty, lists candidate approaches and pitfalls, and
   appends them to \texttt{notes.md}, proposing next steps.
 
-  \item \textbf{Manager --- manage.} The manager folds the plan and the brainstorm
+  \item \textbf{Manager - manage.} The manager folds the plan and the brainstorm
   into one task list (merging duplicates, marking completed items, adding
   new sub-tasks), then either declares the problem done or names the single next task.
 
-  \item \textbf{Worker --- execute.} A fresh worker executes that one task and rewrites
+  \item \textbf{Worker - execute.} A fresh worker executes that one task and rewrites
   both \texttt{solution.py} and \texttt{notes.md} (the notes are replaced by a curated
   whole rather than appended to), then proposes remaining steps.
 
-  \item \textbf{Verifier --- run the public tests.} Whenever the round's worker produced a
+  \item \textbf{Verifier - run the public tests.} Whenever the round's worker produced a
   fresh candidate, the program is executed against the problem's public stdin tests where it
   has them. The pass/fail verdict, with the first failing case, is fed back to the manager
   and treated as ground truth: a failing run overrides a done verdict, forcing the loop to
   continue with a fix-or-switch task. Control returns to the manager (step 3).
 
   \item \textbf{Finalizer.} A finalization worker emits the definitive solution whenever the
-  loop ends without a clean sign-off --- the round budget is spent, the manager reissues a
+  loop ends without a clean sign-off - the round budget is spent, the manager reissues a
   task it just handed out, or it names no task at all. The call is skipped when the manager
   declares the problem done and a usable solution is already on disk.
 \end{enumerate}
@@ -342,12 +342,12 @@ the failed single-call one.
 
 Truncation is a second place the scaffold earns its keep. State lives in \texttt{plan.md},
 \texttt{notes.md} and \texttt{solution.py} rather than in one ever-growing transcript, and
-each worker sees a curated view of it --- plan, notes, current solution, one task --- instead
+each worker sees a curated view of it - plan, notes, current solution, one task - instead
 of the full history. The workspace is external memory that the token cap cannot truncate.
 
 That matters because a generation left to run to a very large cap does not merely risk being
 cut off; it can degrade the model. Eight of the Qwen3.8-27B single calls became unstable during reasoning and
-used up the full 250k budget without emitting code --- on \texttt{abc399\_e},
+used up the full 250k budget without emitting code - on \texttt{abc399\_e},
 the model repeated the phrase "\texttt{Alphabet 5 with a<->b, c<->d, e<->e fixed, and one letter? no.}" 7{,}743 times.
 This is the mechanism behind the otherwise odd finding of Section~\ref{sec:truncation} that most
 cut-off generations still contain a complete solution: the model had reached an answer and
@@ -355,8 +355,8 @@ then talked past the cap re-checking it. Bounding each call keeps the work far f
 gets it onto disk.
 
 The same argument should extend beyond this benchmark, though we do not test it. A task whose
-inputs or intended output do not fit in one call --- a codebase larger than the context window,
-a deliverable longer than the output ceiling --- is not solvable in one call at any reasoning
+inputs or intended output do not fit in one call - a codebase larger than the context window,
+a deliverable longer than the output ceiling - is not solvable in one call at any reasoning
 effort, whereas a sequence of scoped tasks can make progress.
 
 The manager helps most where the base model is least able to organize its own reasoning, and
@@ -372,7 +372,7 @@ The manager is not free: its deliberation can settle on a worse answer than a si
 have produced. On LCB 3765 (Qwen3.6-35B, 128k, reasoning off) the ideation stage identified the
 same optimization the single call had used, talked itself out of it as too error-prone, and
 committed instead to an asymptotically slower plan that a worker then implemented with a further
-bug --- compact, correct code disturbed rather than helped by decomposition. Qwen3.6-35B with
+bug - compact, correct code disturbed rather than helped by decomposition. Qwen3.6-35B with
 reasoning off is the standout loser on this pattern, negative at both caps.
 
 \textbf{Two inexpensive, training-free additions could address the two halves of that failure},
@@ -380,7 +380,7 @@ the plan that was wrong and the implementation that went unchecked. First,
 fresh-perspective workers: every worker inherits the notes and the current solution, so a
 wrong early approach anchors everything downstream. Spawning some workers with the raw problem
 statement and no prior context would give the manager an independent attempt to compare against,
-protecting the tight single-call solution the scaffold otherwise disturbs --- the intuition
+protecting the tight single-call solution the scaffold otherwise disturbs - the intuition
 behind sampling-and-voting and debate \citep{li2024,du2023}. Second, verification instead
 of trust: the manager currently accepts a worker's report on the basis of a sanity check against
 the problem's own samples, so a confidently-wrong solution propagates unchecked and can overwrite
@@ -463,13 +463,13 @@ avoid the second.
 The orchestration scaffold (both versions), the corrected LiveCodeBench evaluator, and the
 analysis and figure scripts that produce every number and figure in this paper are available at
 \url{https://github.com/slee-persis/GVS5H}, together with all run outputs supporting the results
---- per-problem generations for every arm and condition, per-call \texttt{finish\_reason} and
+- per-problem generations for every arm and condition, per-call \texttt{finish\_reason} and
 token logs where instrumented, and the manager arms' workspace transcripts (\texttt{runs/}).
 \else
 The scaffold, the corrected evaluator, the analysis and figure scripts, and all run outputs
-supporting the results --- per-problem generations for every arm and condition, per-call
+supporting the results - per-problem generations for every arm and condition, per-call
 \texttt{finish\_reason} and token logs where instrumented, and the manager arms' workspace
-transcripts --- are provided as anonymized supplementary material, and will be released publicly
+transcripts - are provided as anonymized supplementary material, and will be released publicly
 on acceptance.
 \fi
 
@@ -487,7 +487,7 @@ on acceptance.
 %
 % \subsubsection*{Acknowledgments}
 %
-% \textbf{[To be completed before the camera-ready --- funding sources, if any, and any non-author
+% \textbf{[To be completed before the camera-ready - funding sources, if any, and any non-author
 % help to acknowledge.]}
 \fi
 
@@ -502,14 +502,12 @@ on acceptance.
 \paragraph{Caps.} The 128k figure is a per-call \texttt{max\_tokens} bound, not a context-window
 limit; for Opus-5, Fable 5 and the GPT-5.6 family it is also the provider's hard ceiling on one
 response \citep{anthropic2026,openai2026}. Locally served Qwen3.8-27B has no such ceiling; it is
-bounded by its 262{,}144-token context window \citep{qwen2026c} --- confirmed on the FP8 checkpoint
-as served (vLLM reports \texttt{max\_model\_len} = 262{,}144) --- shared by prompt and output,
+bounded by its 262{,}144-token context window \citep{qwen2026c} shared by prompt and output,
 which puts the 250k setting of Section~\ref{sec:truncation} near its largest possible output.
 
 \paragraph{Conditions.} The pinned-backend set runs at one setting: 128k output cap, reasoning on,
 $\times 5$ passes, with the five models in both arms and Fable 5 single-only. The
-OpenRouter-served set runs at three: 128k reasoning-on $\times 1$ (native
-\texttt{reasoning\_effort} where supported, a 20k reasoning budget where not); 16k reasoning-off
+OpenRouter-served set runs at three: 128k reasoning-on $\times 1$; 16k reasoning-off
 $\times 5$, whose repeated passes give run-to-run variance and paired tests; and 128k reasoning-off
 $\times 1$, the same without the small cap, isolating it as a confound.
 
@@ -532,21 +530,18 @@ as a failure.
 call was generated at 250k while its manager arm ran at 128k (Section~\ref{sec:truncation}). To
 compare them at one cap we replay the stored generations rather than re-run the model: each is
 truncated to 128,000 output tokens, the solution re-extracted from that prefix, and the result
-scored on the same evaluator as every other cell (Appendix~\ref{app:evaluator}). Three details
-matter:
+scored on the same evaluator as every other cell (Appendix~\ref{app:evaluator}): 
 
 \begin{itemize}
   \item \textbf{Truncation is token-exact}, using the serving stack's own tokenizer instead of a
-  character-count approximation. The deciding cases are those where a complete code block sits just
-  before or just after the boundary, which an approximate cut would misclassify.
+  character-count approximation.
 
   \item \textbf{What is truncated is the whole output stream, reasoning then answer}, because that
   is what the original cap bounded. Where the cut lands decides what the extractor sees: past the
   reasoning it sees a truncated answer; inside the reasoning the answer does not exist at all, and
-  the harness's empty-content fallback hands it the truncated reasoning instead, explaining why
-  many cut-off generations still yield gradeable code (Section~\ref{sec:truncation}).
+  the harness's empty-content fallback hands it the truncated reasoning instead. (Section~\ref{sec:truncation}).
 
-  \item \textbf{The cap is invisible to the model, which is what makes the replay exact.} This arm
+  \item \textbf{The cap is invisible to the model.} This arm
   ran on our own vLLM, where \texttt{max\_tokens} is enforced by the server: it never enters the
   prompt, and generation simply cuts off at the limit, abruptly rather than winding up (124 of the
   500 calls end at \texttt{finish\_reason=length}). Nor is this local to vLLM: making a
@@ -566,13 +561,13 @@ Table~\ref{tab:regrade} gives every reported arm as the stock evaluator graded i
 correction. Neither correction is a constant offset, and the larger of the two is the answer keys
 for some models and the harness for others.
 
-\paragraph{The \texttt{sys.stdin} mock.} The evaluator does not run a candidate as a subprocess;
-it executes it in-process with
+\paragraph{The \texttt{sys.stdin} mock.} The evaluator does not run a candidate as a subprocess.
+Instead, it executes it in-process with
 \texttt{sys.stdin} replaced by a mock. That mock's binary view implemented \texttt{readline()} as
-\texttt{inputs.split(b"\textbackslash n")[0]} --- a stateless expression that returns the
+\texttt{inputs.split(b"\textbackslash n")[0]}, which is a stateless expression that returns the
 first line on every call. A program reading multi-line input through
 \texttt{sys.stdin.buffer.readline()} therefore read line 1 repeatedly and failed however correct it
-was. The mock's text-mode \texttt{sys.stdin.readline} was implemented as a proper iterator, and
+was. The mock's text-mode \texttt{sys.stdin.readline} was implemented as a proper iterator and
 \texttt{buffer.read()} returns the whole payload, so neither was affected, which is why the
 common \texttt{sys.stdin.buffer.read().split()} idiom never exposed it. We replaced the mock's
 binary view with one backed by a \texttt{BytesIO} so that reads advance a position, and re-scored
@@ -581,17 +576,17 @@ every stored generation.
 We report it explicitly for two reasons. First, it interacts badly with the v2 verifier: that step
 runs the candidate as a real subprocess (step 5 of Section~\ref{sec:method}), where
 \texttt{buffer.readline()} works correctly, so the manager was told its solution passed the public
-samples for programs the grader then marked wrong --- the loop's one external signal certifying a
+samples for programs the grader then marked wrong - the loop's one external signal certifying a
 wrong answer. Second, the exposure is uneven across models rather than a constant offset: 371 of the
 5{,}425 pinned-backend outputs containing code use the idiom, and 86\% of those were scored wrong
 against 18\% for the outputs that do not. Fable 5 never uses it and its scores are unchanged to the
 decimal. The OpenRouter-served set reaches for it once in 4{,}764 generations containing code, and
-then through an alias --- Kimi-K3's single call on \texttt{abc396\_g} binds
+then through an alias - Kimi-K3's single call on \texttt{abc396\_g} binds
 \texttt{sys.stdin.buffer} to a name and calls \texttt{readline()} on that. Every OpenRouter-served
 number is re-scored all the same, and the repaired mock moves one cell: Kimi-K3's 128k
 reasoning-on single arm, from 82 to 83 (Table~\ref{tab:regrade}, where that cell reaches its
 reported 86 through the answer-key correction below). Because the idiom is a matter of coding
-style, a harness bug of this shape is not a wash across a leaderboard --- it penalizes the models
+style, a harness bug of this shape is not a wash across a leaderboard - it penalizes the models
 whose style trips it, and its $\Delta$ harness column ranges from $+0.0$ for Fable 5, which
 never writes it, to $+12.6$ for GPT-5.6-Terra's manager arm.
 
@@ -607,8 +602,8 @@ to what the reference sums to; for \texttt{arc190\_a}, that the chosen operation
 number what the reference says is optimal; for \texttt{arc195\_c}, that the Yes/No verdict matches
 the reference and that any placement offered uses the requested counts of each colour, on distinct
 cells, with every consecutive pair a step of the kind its colour allows. \texttt{abc385\_f} is
-compared token by token at $10^{-6}$ relative tolerance. This class of defect is one LiveCodeBench documents upstream --- its errata
-list eleven earlier problems whose keys accept multiple answers, none of them in LCB-100 --- and
+compared token by token at $10^{-6}$ relative tolerance. This class of defect is one LiveCodeBench documents upstream - its errata
+list eleven earlier problems whose keys accept multiple answers, none of them in LCB-100 - and
 it is a property of the benchmark, not of any model, so it applies to every arm of both sets and
 moves 104 of their 118 arm-passes. Re-judging
 runs each submission as a real subprocess rather than in-process, which is also what repairs the
@@ -617,7 +612,7 @@ mock above and makes \texttt{sys.stdout.buffer} write as it does on the contest 
 Both corrections are conservative in the same two ways. They re-run only the submissions the stock
 evaluator marked wrong, so neither can turn a pass into a failure and the corrections move every
 arm of Table~\ref{tab:regrade} upward; and among those they re-run only
-the ones with a known reason to be misjudged --- a failure on one of the four problems above, or
+the ones with a known reason to be misjudged - a failure on one of the four problems above, or
 code that touches \texttt{sys.stdin.buffer} or \texttt{sys.stdout.buffer}. A submission that the
 in-process evaluator failed for some other reason keeps that verdict. Re-executing every stored
 generation instead, passing and failing alike, finds 25 further submissions across 11{,}800
@@ -658,7 +653,7 @@ manager-arm model calls. Character counts are of the emitted program.}
 \midrule
 Qwen3.5-9B \newline (128k, off) & abc385\_d & Timed out: a na\"ive per-segment scan of a path
 simulation. & The brainstorm flagged in writing that the check is $O(N\cdot M) \approx
-4\times10^{10}$ and prescribed a range-query structure before any code --- the up-front
+4\times10^{10}$ and prescribed a range-query structure before any code - the up-front
 planning a single pass skips (Section~\ref{sec:discussion}). \\
 \addlinespace
 Qwen3.6-35B \newline (on) & abc394\_f & Cut off mid-reasoning at 32,768 tokens; returned nothing. &
@@ -668,18 +663,18 @@ failure. The same 32k clamp was hit 117 times across this model's manager calls,
 attempts per problem one clamped call no longer costs the problem. \\
 \addlinespace
 MiniMax-M3 \newline (on) & 3701 & Printed nothing on \texttt{cdcd}: the lexicographic-reconstruction
-branch was broken. & Split the two coupled objectives across worker cycles --- one worker on the
+branch was broken. & Split the two coupled objectives across worker cycles - one worker on the
 forward cost DP over capped run-lengths, a separate worker on a suffix DP used purely for the
 lexicographic reconstruction. \\
 \addlinespace
 Kimi-K3 \newline (128k, off) & 3687 & Over-counted the longest unique-value path (9 and 3 where the
 answers were 6 and 2), never shrinking its window on a repeated value. & The brainstorm wrote the
-reduction into \texttt{notes.md} first --- longest substring without repeating characters along each
+reduction into \texttt{notes.md} first - longest substring without repeating characters along each
 root-to-leaf path, window start via last-seen depths, $O(n)$ DFS. Only then did a worker
 implement it. \\
 \addlinespace
 GPT-5.6-Terra \newline (on) & 3688 & 4,615 characters implementing a Segment-Tree-Beats-shaped
-structure indexed by candidate value, and wrong. & The plan named the difficulty in advance --- the
+structure indexed by candidate value, and wrong. & The plan named the difficulty in advance - the
 state must be compressed rather than maintaining all distinct values per index. Nine calls
 later, the manager arm returned 1,860 characters over one standard segment tree. The contribution is
 \emph{subtraction}. Manager-only win in four of five passes. \\
@@ -690,15 +685,15 @@ lemma (at most two unfinished paths at any vertex), after which a worker impleme
 scan directly in 2,166 characters over five calls. Manager-only win in two of five passes. \\
 \addlinespace
 Qwen3.8-27B \newline (on) & abc397\_g & Spent all 250,000 tokens on edge-case self-interrogation and
-never emitted a program --- the runaway-reasoning failure mode of Section~\ref{sec:discussion} in
-pure form --- though the reasoning had already reached the min-cut formulation. & Committed that
+never emitted a program - the runaway-reasoning failure mode of Section~\ref{sec:discussion} in
+pure form - though the reasoning had already reached the min-cut formulation. & Committed that
 same reduction to \texttt{plan.md} as a plan, then had a worker implement it: five calls, 3,548
 characters, manager-only win in all five passes. The scaffold does not supply the insight; it forces
 it onto disk before the budget runs out. \\
 \addlinespace
 Opus-5 \newline (on) & abc388\_e & The feasibility test over-counted, reporting 225 pairs where 220
-is optimal. & Recorded the justification in \texttt{notes.md} first --- an exchange argument,
-plus monotonicity of feasibility in $K$ licensing a binary search --- then had one worker implement
+is optimal. & Recorded the justification in \texttt{notes.md} first - an exchange argument,
+plus monotonicity of feasibility in $K$ licensing a binary search - then had one worker implement
 it and a second harden it. \\
 \bottomrule
 \end{tabular}
