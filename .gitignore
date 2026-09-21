@@ -29,16 +29,23 @@ venv/
 *.egg-info/
 .ipynb_checkpoints/
 
-# LaTeX build artifacts
+# LaTeX build artifacts. The built PDF is tracked.
 *.aux
 *.log
 *.out
 *.toc
+*.lof
+*.lot
 *.synctex.gz
 *.fls
 *.fdb_latexmk
 *.bbl
 *.blg
+*.bcf
+*.run.xml
+
+# Superseded drafts, archived by their modified date.
+paper/old/
 
 # OS
 .DS_Store
