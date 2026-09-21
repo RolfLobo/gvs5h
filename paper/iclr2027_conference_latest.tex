@@ -31,7 +31,7 @@
 \newenvironment{chartfigure}{\begin{figure}[tb]}{\end{figure}}
 
 
-\title{Zero-Shot Self-Orchestration \\
+\title{GVS5H: Zero-Shot Self-Orchestration \\
 with Ledger-Based Control \\
 Improves Coding in Language Models}
 
@@ -72,7 +72,7 @@ and revision over multiple turns, on the intuition that decomposing a problem an
 
 In this paper, we test and quantify this intuition by measuring the performance of a single model call against a basic system consisting of multiple alternating orchestration and execution calls (manager and worker roles). Each call has a new context and communicates through a shared filesystem, with no access to additional tools.
  
-We call the method studied here zero-shot self-orchestration (GVS5H): the orchestrator is neither trained for orchestration nor
+We call the method studied here zero-shot self-orchestration (GVS5H: Gorilla vs.\ 5 Humans): the orchestrator is neither trained for orchestration nor
 given task-specific demonstrations of how to decompose or coordinate the problem. Every model role is the same model in a fresh context
 with a short generic prompt. This scaffold is further described in Section~\ref{sec:method}.
 
@@ -456,6 +456,9 @@ given there too. Two sources of irreducibility are stated in
 Section~\ref{sec:limitations}: decoding temperature is non-zero, and the OpenRouter-served arms
 depend on provider health at run time. The pinned-backend arms, which carry the paper's claims,
 avoid the second.
+
+\subsection*{Code availability}
+
 \iffinalversion
 The orchestration scaffold (both versions), the corrected LiveCodeBench evaluator, and the
 analysis and figure scripts that produce every number and figure in this paper are available at
@@ -468,6 +471,10 @@ supporting the results --- per-problem generations for every arm and condition, 
 \texttt{finish\_reason} and token logs where instrumented, and the manager arms' workspace
 transcripts --- are provided as anonymized supplementary material, and will be released publicly
 on acceptance.
+\fi
+
+\iffinalversion
+
 \fi
 
 \iffinalversion

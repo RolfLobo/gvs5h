@@ -80,7 +80,7 @@ def notes(stats):
     return [
         "Bars are pass@1 on the same 100 problems, the line through each the 95% CI across "
         "the 5 passes (t, df = 4). The left bar of each pair is the single call, light; the "
-        "manager is beside it, dark; hatch is the model. Fable 5 ran single-only, so it has one bar, which the "
+        "manager is beside it, dark; colour is the model. Fable 5 ran single-only, so it has one bar, which the "
         "dashed rule carries across the chart."
     ]
 

@@ -110,7 +110,6 @@ def apply_theme(t):
         "axes.spines.top": False, "axes.spines.right": False,
         "axes.grid": False, "grid.linewidth": 0.8,
         "figure.dpi": 130,
-        "hatch.linewidth": palette.HATCH_LW * PAGE_SCALE,
     })
 
 

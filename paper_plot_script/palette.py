@@ -20,10 +20,8 @@ FILLS = {
 SLOT = {"q38": 1, "terra": 2, "luna": 3, "fable": 4, "q38fn": 5, "dsv41": 6,
         "q35": 1, "mm3": 2, "kimi": 3, "q9": 4, "opus": 4}
 
-HATCH = {1: "", 2: "//", 3: "..", 4: "xx", 5: "\\\\", 6: "++"}
 MARKER = {1: "o", 2: "s", 3: "^", 4: "D", 5: "v", 6: "P"}
 
-HATCH_LW = 0.40
 SURFACE = "#ffffff"
 
 LABELS = {"q38": "Qwen3.8-27B", "terra": "GPT-5.6-Terra", "luna": "GPT-5.6-Luna",
@@ -41,12 +39,7 @@ SETS = {
 
 def bar_kw(key, arm, surface=SURFACE):
     light, dark = FILLS[key]
-    h = HATCH[SLOT[key]]
-    kw = {"color": dark if arm == "manager" else light}
-    if h:
-        kw["hatch"] = h
-        kw["edgecolor"] = surface if arm == "manager" else dark
-    return kw
+    return {"color": dark if arm == "manager" else light}
 
 
 def marker_kw(key, arm):
@@ -134,7 +127,7 @@ def main():
               f"{LABELS[k]:16s} {l} -> {d}  {r:.2f}:1")
 
     print(f"\nmanager fills under deuteranopia, within a figure (need dE >= {DEUTER_MIN:.0f};"
-          f" hatch is the secondary encoding that makes this floor legal)")
+          f" colour is the only encoding, so every pair has to clear it unaided)")
     for name, keys in SETS.items():
         for a, b in itertools.combinations(keys, 2):
             e = delta_e(deuter(FILLS[a][1]), deuter(FILLS[b][1]))
@@ -147,12 +140,11 @@ def main():
     print(f"  {check(pale - dark >= ARM_GULF_MIN, f'arm gulf {pale - dark:.0f} L*')} "
           f"palest single L* {pale:.0f} vs darkest manager L* {dark:.0f} -> gulf {pale - dark:.0f}")
 
-    print("\ntexture distinct within a figure")
+    print("\nmarkers distinct within a figure")
     for name, keys in SETS.items():
-        hs = [HATCH[SLOT[k]] for k in keys]
         ms = [MARKER[SLOT[k]] for k in keys]
-        print(f"  {check(len(set(hs)) == len(hs) and len(set(ms)) == len(ms), f'{name} texture clash')} "
-              f"{name:22s} hatch {hs}  marker {ms}")
+        print(f"  {check(len(set(ms)) == len(ms), f'{name} marker clash')} "
+              f"{name:22s} marker {ms}")
 
     print("\none hue per model across the paper")
     seen = {}
@@ -177,7 +169,6 @@ def swatches(path=None):
 
     path = path or os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "palette_swatches.png")
-    matplotlib.rcParams["hatch.linewidth"] = HATCH_LW * 2
 
     def grey(c):
         y = luminance(c)
@@ -202,8 +193,7 @@ def swatches(path=None):
                     edge = (grey(SURFACE) if gray else SURFACE) if arm == "manager" else \
                            (grey(dark) if gray else dark)
                     ax.add_patch(Rectangle((3.6 + i * 1.5, y - 0.34), 1.4, 0.62,
-                                           facecolor=face, hatch=HATCH[SLOT[k]],
-                                           edgecolor=edge, linewidth=0.8))
+                                           facecolor=face, edgecolor=edge, linewidth=0.8))
                 ax.text(3.5, y - 0.03, LABELS[k], fontsize=8, ha="right", va="center")
                 y -= 0.8
             y -= 0.4

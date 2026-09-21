@@ -104,7 +104,7 @@ CAPTION = ("\\textbf{The scaffold's bill.} Cost of one pass over the same 100 pr
            "discount is "
            "taken, and Qwen3.8-27B is priced at OpenRouter market rates. The top bar of "
            "each pair is the single call, light; the manager is under it, dark; all are at "
-           "a 128k output cap, and hatch is the model. Fable 5 is first; the models below "
+           "a 128k output cap, and colour is the model. Fable 5 is first; the models below "
            "it run top to bottom from the cheapest single call to the dearest. "
            "Table~\\ref{tab:cost} carries the tests.")
 
