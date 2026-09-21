@@ -46,6 +46,7 @@ venv/
 
 # Superseded drafts, archived by their modified date.
 paper/old/
+blog/
 
 # OS
 .DS_Store
