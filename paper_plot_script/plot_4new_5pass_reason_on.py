@@ -215,7 +215,7 @@ TABLES = [(MAIN_HEADER, MAIN_SPEC, main_rows,
 def draw(stats, theme="light", save=None):
     t = THEMES[theme]
     apply_theme(t)
-    stats = sorted(stats, key=lambda s: (s["key"] == "fable", s["single"]))
+    stats = sorted(stats, key=lambda s: (s["key"] != "fable", s["single"]))
     fig, ax = plt.subplots(figsize=FIGSIZE_V)
     fig.subplots_adjust(**M4)
     n = len(stats)

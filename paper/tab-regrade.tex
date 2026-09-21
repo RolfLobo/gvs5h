@@ -11,7 +11,13 @@ number used everywhere else in this paper. Upper block: five-pass means at a 128
 reasoning on (Table~\ref{tab:main}). Lower block: the 128k reasoning-on, one-pass
 OpenRouter arms (Table~\ref{tab:openrouter}); Qwen3.5-9B is unusable in this condition and
 is omitted. Across the 48 arm-passes of the two remaining OpenRouter conditions the harness
-correction moves six by one point and the key correction moves each arm by 0 to 3 points.}
+correction moves six by one point and the key correction moves each arm by 0 to 3 points.
+Qwen3.8-27B's single call is the one row where \textbf{as graded} is not the stock evaluator
+on the code being reported: that arm is cap-matched by replaying its 250k generations at 128k
+(Appendix~\ref{app:protocol}) and the truncated solutions were never put through the stock
+evaluator, so the column is the 250k grading and the two $\Delta$ columns carry the cap match
+as well as the corrections. Against that baseline the row gains 35 problem-passes and loses
+13, eight of them generations whose 128k prefix contains no code at all.}
 \label{tab:regrade}
 \small
 \setlength{\tabcolsep}{4pt}

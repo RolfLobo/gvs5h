@@ -302,7 +302,7 @@ Cap hits are rare across all models except the Qwen3.8 family, especially Qwen3.
 Of the single arm's 35 empty cells, the manager
 solves 28, fails 7, and leaves none empty, worth 5.6 points. To investigate the effect of the cap, Qwen3.8-27B's
 single arm was allowed to generate up to 250k tokens. This higher limit raised the score by 3.2
-points, to 70.0 (Table~\ref{tab:qwen-caps}). Re-scoring each single arm over only the problem-passes
+points, to 70.0 (Table~\ref{tab:caps}). Re-scoring each single arm over only the problem-passes
 where it emitted code bounds the effect model by model. Fable 5
 gains 1.7 points there, six of its nine empty cells being safety refusals rather than
 truncations.
@@ -600,8 +600,8 @@ runs each submission as a real subprocess rather than in-process, which is also 
 mock above and makes \texttt{sys.stdout.buffer} write as it does on the contest judge.
 
 Both corrections are conservative in the same two ways. They re-run only the submissions the stock
-evaluator marked wrong, so neither can turn a pass into a failure and every move in
-Table~\ref{tab:regrade} raises a score rather than lowering one; and among those they re-run only
+evaluator marked wrong, so neither can turn a pass into a failure and the corrections move every
+arm of Table~\ref{tab:regrade} upward; and among those they re-run only
 the ones with a known reason to be misjudged --- a failure on one of the four problems above, or
 code that touches \texttt{sys.stdin.buffer} or \texttt{sys.stdout.buffer}. A submission that the
 in-process evaluator failed for some other reason keeps that verdict. Re-executing every stored
@@ -649,7 +649,7 @@ planning a single pass skips (Section~\ref{sec:discussion}). \\
 Qwen3.6-35B \newline (on) & abc394\_f & Cut off mid-reasoning at 32,768 tokens; returned nothing. &
 Solved in one worker cycle: the brainstorm fixed the structural insight (an ``alkane'' subtree needs
 a degree-4 center and $\ge 5$ vertices); the worker used an iterative DFS to avoid a recursion-depth
-failure. The same 32k clamp was hit 115 times across this model's manager calls, but with several
+failure. The same 32k clamp was hit 117 times across this model's manager calls, but with several
 attempts per problem one clamped call no longer costs the problem. \\
 \addlinespace
 MiniMax-M3 \newline (on) & 3701 & Printed nothing on \texttt{cdcd}: the lexicographic-reconstruction

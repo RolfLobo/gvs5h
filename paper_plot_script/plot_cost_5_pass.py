@@ -104,8 +104,8 @@ CAPTION = ("\\textbf{The scaffold's bill.} Cost of one pass over the same 100 pr
            "discount is "
            "taken, and Qwen3.8-27B is priced at OpenRouter market rates. The top bar of "
            "each pair is the single call, light; the manager is under it, dark; all are at "
-           "a 128k output cap, and hatch is the model. Models run top to bottom from the "
-           "cheapest single call to the dearest, with Fable 5 last. "
+           "a 128k output cap, and hatch is the model. Fable 5 is first; the models below "
+           "it run top to bottom from the cheapest single call to the dearest. "
            "Table~\\ref{tab:cost} carries the tests.")
 
 
@@ -282,7 +282,7 @@ def draw(stats, theme="light", save=None):
     arms = stats["arms"]
 
     models = sorted((k.rsplit("_", 1)[0] for k in arms if k.endswith("_single")),
-                    key=lambda mk: (mk == "fable", arms[f"{mk}_single"]["mean"]))
+                    key=lambda mk: (mk != "fable", arms[f"{mk}_single"]["mean"]))
     X = {}
     for i, mk in enumerate(models):
         y = i * PITCH
