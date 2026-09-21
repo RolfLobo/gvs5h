@@ -18,7 +18,7 @@
 \usepackage[hidelinks]{hyperref}
  
 \newif\iffinalversion
-\finalversionfalse
+\finalversiontrue
 \iffinalversion\iclrfinalcopy\fi
 
 \newcommand{\plotdir}{plots}
@@ -49,6 +49,11 @@ Improves Coding in Language Models}
 \begin{document}
 
 \maketitle
+
+% Not an ICLR submission. iclr2027_conference.sty sets the venue line as \lhead inside
+% \@maketitle, so it can only be cleared after \maketitle has run; the rest of the template
+% (fonts, title block, section style, figure sizing) is kept.
+\lhead{}
 
 \begin{abstract}
 Frontier coding performance is typically attained with large, costly proprietary models. We introduce ledger-based zero-shot self-orchestration (GVS5H), a training-free method in which fresh instances of one model decompose problems and coordinate through a shared file system. 
@@ -302,8 +307,10 @@ Cap hits are rare across all models except the Qwen3.8 family, especially Qwen3.
 Of the single arm's 35 empty cells, the manager
 solves 28, fails 7, and leaves none empty, worth 5.6 points. To investigate the effect of the cap, Qwen3.8-27B's
 single arm was allowed to generate up to 250k tokens. This higher limit raised the score by 3.2
-points, to 70.0 (Table~\ref{tab:caps}). Re-scoring each single arm over only the problem-passes
-where it emitted code bounds the effect model by model. Fable 5
+points, to 70.0. Re-scoring each single arm over only the problem-passes
+where it emitted code bounds the effect model by model: the \emph{emitted only} column of
+Table~\ref{tab:caps} carries that read for every arm, and puts Qwen3.8-27B's single call at 71.8.
+Fable 5
 gains 1.7 points there, six of its nine empty cells being safety refusals rather than
 truncations.
 
@@ -319,8 +326,8 @@ Table~\ref{tab:openrouter} collects every condition.
 \paragraph{Reasoning off.} We ran five independent
 passes per condition at a 16k cap plus a one-pass 128k control. Run-to-run spread across the
 five passes is small. Kimi-K3 exhibits a particularly large gain, $+31.6$ points
-(Figure~\ref{fig:scale-bars}b; Figure~\ref{fig:scale-16k} by scale). The 128k control largely eliminates truncation and reproduces the ordering
-(Figure~\ref{fig:scale-bars}c) (Figure~\ref{fig:scale-off}).
+(Figure~\ref{fig:scale-bars}b; Figure~\ref{fig:scale-16k} by scale). The 128k control largely
+eliminates truncation and reproduces the ordering (panel c; Figure~\ref{fig:scale-off}).
 
 \section{Discussion}
 \label{sec:discussion}
@@ -358,7 +365,7 @@ reasoning disabled a single call jumps straight to code, and the scaffold suppli
 space, on disk and across calls, that the model would not otherwise use
 (Figure~\ref{fig:scale-bars}c). The second is reasoning that runs away: Qwen3.6-35B with
 reasoning on spends its whole budget deliberating, and gains more here than in any of its other
-conditions (Figure~\ref{fig:scale-bars}a). Where a model can both plan internally and stop on
+conditions (panel a). Where a model can both plan internally and stop on
 its own, the scaffold has less to add.
 
 The manager is not free: its deliberation can settle on a worse answer than a single call would
@@ -445,7 +452,7 @@ the benchmark selection, the per-role temperatures, the serving path and provide
 pass counts, the instrumentation, and the cap-matching replay procedure for Qwen3.8-27B's single
 arm. Appendix~\ref{app:evaluator} documents both evaluator defects and their fixes, without which the
 reported numbers cannot be reproduced from the stored generations. The statistical procedures are
-given in Section~\ref{sec:setup}. Two sources of irreducibility are stated in
+given there too. Two sources of irreducibility are stated in
 Section~\ref{sec:limitations}: decoding temperature is non-zero, and the OpenRouter-served arms
 depend on provider health at run time. The pinned-backend arms, which carry the paper's claims,
 avoid the second.
@@ -464,16 +471,17 @@ on acceptance.
 \fi
 
 \iffinalversion
-\subsubsection*{Author contributions}
-
-\textbf{[To be completed before the camera-ready.]} For example: V.G., V.K. and A.K.\ conceived
-the study and built the scaffold; X.S.\ and J.L.\ ran the experiments and analysed the data;
-S.L.\ supervised the work; all authors wrote the paper.
-
-\subsubsection*{Acknowledgments}
-
-\textbf{[To be completed before the camera-ready --- funding sources, if any, and any non-author
-help to acknowledge.]}
+% Commented out until they are written; both still held placeholder text.
+% \subsubsection*{Author contributions}
+%
+% \textbf{[To be completed before the camera-ready.]} For example: V.G., V.K. and A.K.\ conceived
+% the study and built the scaffold; X.S.\ and J.L.\ ran the experiments and analysed the data;
+% S.L.\ supervised the work; all authors wrote the paper.
+%
+% \subsubsection*{Acknowledgments}
+%
+% \textbf{[To be completed before the camera-ready --- funding sources, if any, and any non-author
+% help to acknowledge.]}
 \fi
 
 \bibliography{references}
@@ -577,8 +585,8 @@ number is re-scored all the same, and the repaired mock moves one cell: Kimi-K3'
 reasoning-on single arm, from 82 to 83 (Table~\ref{tab:regrade}, where that cell reaches its
 reported 86 through the answer-key correction below). Because the idiom is a matter of coding
 style, a harness bug of this shape is not a wash across a leaderboard --- it penalizes the models
-whose style trips it, and the $\Delta$ harness column of Table~\ref{tab:regrade} ranges from
-$+0.0$ for Fable 5, which never writes it, to $+12.6$ for GPT-5.6-Terra's manager arm.
+whose style trips it, and its $\Delta$ harness column ranges from $+0.0$ for Fable 5, which
+never writes it, to $+12.6$ for GPT-5.6-Terra's manager arm.
 
 \paragraph{Answer keys that accept one of many valid answers.} LiveCodeBench grades by exact
 string match against a single stored output. Four LCB-100 problems accept more than one:
