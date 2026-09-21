@@ -357,7 +357,7 @@ gets it onto disk.
 The same argument should extend beyond this benchmark, though we do not test it. A task whose
 inputs or intended output do not fit in one call --- a codebase larger than the context window,
 a deliverable longer than the output ceiling --- is not solvable in one call at any reasoning
-effort, whereas a sequence of bounded steps can carry it.
+effort, whereas a sequence of scoped tasks can make progress.
 
 The manager helps most where the base model is least able to organize its own reasoning, and
 that weakness takes two forms. The first is having no internal planning stage at all: with
