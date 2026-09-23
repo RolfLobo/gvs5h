@@ -16,7 +16,17 @@
 \usepackage{microtype}
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
- 
+
+% Springer author-year citations are "(Name 2026)", with no comma before the year;
+% paper_conference.sty sets aysep={,}, so this has to come after it is loaded.
+\setcitestyle{aysep={}}
+
+% Springer caption labels: "Fig. 1" / "Table 1", bold, separated by a space rather
+% than a colon. Scoped to figure/table so subcaption's (a)/(b) labels are untouched.
+\captionsetup[figure]{labelfont=bf,labelsep=space}
+\captionsetup[table]{labelfont=bf,labelsep=space}
+\renewcommand{\figurename}{Fig.}
+
 \newif\iffinalversion
 \finalversiontrue
 \iffinalversion\iclrfinalcopy\fi
@@ -36,7 +46,8 @@ with Ledger-Based Control \\
 Improves Coding in Language Models}
 
 \author{%
-  Victor Gao\thanks{Equal contribution.}\ \ \thanks{Persis Capital Inc.} \quad
+  Victor Gao\thanks{Equal contribution.}\ \ \thanks{Persis Capital Inc.,
+  Toronto, Ontario, Canada.} \quad
   Vida Khosrowshahi\footnotemark[1]\ \ \footnotemark[2] \quad
   Ali Khosrowshahi\footnotemark[1]\ \ \footnotemark[2] \AND
   Xihao Sun\footnotemark[2] \quad
@@ -56,13 +67,24 @@ Improves Coding in Language Models}
 \lhead{}
 
 \begin{abstract}
-Frontier coding performance is typically attained with large, costly proprietary models. We introduce ledger-based zero-shot self-orchestration (GVS5H), a training-free method in which fresh instances of one model decompose problems and coordinate through a shared file system. 
-Across eleven open and closed-weight models on the 100 latest hard LiveCodeBench problems,
-the method yields as much as 25.6 points improvement, boosting several cheaper models to frontier-level performance. 
-Orchestrated Qwen3.8 Flash Next scores 93.0\% against Fable 5's 90.4\% at 9\% of the cost, while the smaller Qwen3.8-27B reaches 92.4\%. 
-Gains are not universal: some models are unchanged or worse. Transcript analysis attributes the gain to decomposition and persistent context. 
+Frontier coding performance is typically attained with large, costly proprietary models. We introduce ledger-based zero-shot self-orchestration (GVS5H), a training-free method in which fresh instances of one model decompose problems and coordinate through a shared file system.
+A single model acts both as a manager that writes a plan and maintains a task list and as workers that each execute one assigned task. Every call starts from an empty context and reads state only from the shared ledger files.
+Across eleven open and closed-weight models on the 100 latest hard LiveCodeBench problems
+the method yields as much as 25.6 points improvement, boosting several cheaper models to frontier-level performance.
+Orchestrated Qwen3.8 Flash Next scores 93.0\% against Fable 5's 90.4\% at 9\% of the cost, while the smaller Qwen3.8-27B reaches 92.4\%.
+Gains are not universal as some models are unchanged or worse. Transcript analysis attributes the gain to decomposition and persistent context.
 Inference-time organization can reach or exceed frontier coding accuracy at a fraction of the cost on self-hostable weights.
 \end{abstract}
+
+\vskip 0.2in
+\begin{center}
+\begin{minipage}{0.85\textwidth}
+\noindent\textbf{Keywords}\quad Large language models \textperiodcentered\ Multi-agent
+systems \textperiodcentered\ Inference-time scaling \textperiodcentered\ Code generation
+\textperiodcentered\ Self-orchestration \textperiodcentered\ LiveCodeBench
+\end{minipage}
+\end{center}
+\vskip 0.2in
 
 \section{Introduction}
 \label{sec:intro}
@@ -83,14 +105,15 @@ Our test uses existing proprietary and open-weight language models, and what
 we vary is the coordination layer above them. Prior systems differ mainly in how that layer is
 decided. One line trains the coordinator: Fugu \citep{sakana2026} learns to assemble
 and direct a pool of expert workers per query, and Conductor \citep{nielsen2025} is a 7B
-model RL-trained to design worker communication topologies; earlier query routers learn to
+model trained with reinforcement learning to design worker communication topologies; earlier query routers learn to
 pick a model per query \citep{ong2024}. A second fixes roles and hand-off order in advance,
 so every problem flows through the same pipeline
 \citep{hong2023,qian2023,li2023,huang2023,islam2024}, while frameworks such as AutoGen
 \citep{wu2023} instead supply configurable conversable agents and leave the conversation
 pattern open; Trinity \citep{xu2025} sits at the boundary with the first, fixing a
 three-role workflow but learning which model fills each role. A third coordinates through a
-shared store rather than a pipeline - ARIADNE \citep{wei2026} pairs a blackboard with MCTS
+shared store rather than a pipeline - ARIADNE \citep{wei2026} pairs a blackboard with Monte
+Carlo tree search (MCTS)
 on program generation, LbMAS \citep{han2025} mediates all communication through a global
 board - or decentralizes entirely, through debate \citep{du2023} or sampling and voting
 \citep{li2024}; Mixture-of-Agents \citep{wangj2024a} instead aggregates in layers. A
@@ -123,7 +146,7 @@ coordinating through a shared workspace on disk:
 \end{center}
 
 Workers never talk to each other; each sees the ledger plus the one task the manager
-assigns. The control flow (Figure~\ref{fig:loop}) is:
+assigns. The control flow (Fig.~\ref{fig:loop}) is:
 
 \begin{enumerate}
   \item \textbf{Manager - plan.} The manager reads the problem and writes a 3--6 sentence
@@ -189,7 +212,7 @@ that scaffold. Section~\ref{sec:setup} gives the per-role temperatures.
 \label{sec:scaffold-v1}
 
 The loop above is v2, which produced the pinned-backend results and is drawn in
-Figure~\ref{fig:loop}. The original scaffold produced the OpenRouter-served set of
+Fig.~\ref{fig:loop}. The original scaffold produced the OpenRouter-served set of
 Section~\ref{sec:openrouter}. It runs the same loop on closely matched prompts, with five
 differences, all of them on the manager arm: it allows 4 manager$\to$worker cycles rather than 10
 (\texttt{MAX\_ITERS}), it has no public-test verifier at step 5, it has no cut-off summarizer, its
@@ -240,12 +263,18 @@ reasoning-off $\times 1$ as a control isolating the small cap. Appendix~\ref{app
 gives the reasoning-effort settings per provider, the instrumentation, and the cap-matching
 replay used for Qwen3.8-27B's single arm.
 
-\paragraph{Statistics.} Reported $\pm$SD is the sample SD (divisor $n-1 = 4$) of the five
+\paragraph{Statistics.} Reported $\pm$SD is the sample standard deviation (SD; divisor $n-1 = 4$) of the five
 pass scores. Five-pass comparisons use a paired sign-flip permutation test on per-problem
 mean $\Delta$ ($n = 100$ problems; $2\times10^{5}$ resamples), Holm-corrected where a family
 of models is tested; 95\% $t$-intervals for mean pass@1 across the five passes
 ($\mathrm{df} = 4$). Pooled problem$\times$pass agreement uses exact McNemar on the
 discordants, treating cells as independent.
+
+\paragraph{Generative AI tools.} Language models are the object of study here: every
+reported number is a measurement of model output produced by the scaffold and baselines
+above. Generative language-model tools were additionally used to assist in preparing this
+work, and no reported result was generated, imputed or altered by them; the Declarations
+give the full disclosure.
 
 \section{Results}
 \label{sec:results}
@@ -282,7 +311,7 @@ priced here is at the same 128k output cap, Qwen3.8-27B's single call included
 \input{fig-cost-vs-score}
 
 \textbf{The scaffold improves performance for a higher price.}
-Figure~\ref{fig:cost-vs-score} plots price against accuracy: every model's manager arm gains accuracy over its single
+Fig.~\ref{fig:cost-vs-score} plots price against accuracy: every model's manager arm gains accuracy over its single
 call, and costs more. On average, the number of output tokens increases to about 3x baseline.
  
 \textbf{The base cost varies across models.} A single-call pass on Qwen3.8-27B emits more
@@ -321,13 +350,13 @@ The five models below were served through the OpenRouter gateway and run on the 
 scaffold, so they are not directly comparable to the pinned-backend arms above.
 Table~\ref{tab:openrouter} collects every condition.
 
-\paragraph{Reasoning on:} Opus-5 scores at $88$ single $\to 95$ manager, the highest of all tested scenarios. However, smaller models tend to gain more from the manager (Figure~\ref{fig:scale-bars}a).
+\paragraph{Reasoning on:} Opus-5 scores at $88$ single $\to 95$ manager, the highest of all tested scenarios. However, smaller models tend to gain more from the manager (Fig.~\ref{fig:scale-bars}a).
 
 \paragraph{Reasoning off.} We ran five independent
 passes per condition at a 16k cap plus a one-pass 128k control. Run-to-run spread across the
 five passes is small. Kimi-K3 exhibits a particularly large gain, $+31.6$ points
-(Figure~\ref{fig:scale-bars}b; Figure~\ref{fig:scale-16k} by scale). The 128k control largely
-eliminates truncation and reproduces the ordering (panel c; Figure~\ref{fig:scale-off}).
+(Fig.~\ref{fig:scale-bars}b; Fig.~\ref{fig:scale-16k} by scale). The 128k control largely
+eliminates truncation and reproduces the ordering (panel c; Fig.~\ref{fig:scale-off}).
 
 \section{Discussion}
 \label{sec:discussion}
@@ -363,7 +392,7 @@ The manager helps most where the base model is least able to organize its own re
 that weakness takes two forms. The first is having no internal planning stage at all: with
 reasoning disabled a single call jumps straight to code, and the scaffold supplies a planning
 space, on disk and across calls, that the model would not otherwise use
-(Figure~\ref{fig:scale-bars}c). The second is reasoning that runs away: Qwen3.6-35B with
+(Fig.~\ref{fig:scale-bars}c). The second is reasoning that runs away: Qwen3.6-35B with
 reasoning on spends its whole budget deliberating, and gains more here than in any of its other
 conditions (panel a). Where a model can both plan internally and stop on
 its own, the scaffold has less to add.
@@ -417,6 +446,21 @@ cheaper than frontier models while providing a higher accuracy. Transcript analy
 attributes the gain to decomposition and to context that persists across calls.   The result is conditional - some configurations result in no improvement or regression. However, in many cases, the orchestration is a cost-effective substitute for model scale.
 
 
+\section*{Declarations}
+
+\subsection*{Funding}
+
+No funding was received for conducting this study.
+
+\subsection*{Competing interests}
+
+The authors have no relevant financial or non-financial interests to disclose.
+
+\subsection*{Ethics approval and consent to participate}
+
+This study involves no human participants, no animal subjects, and no
+personal data, so no ethics approval and no informed consent were required.
+
 \subsection*{AI use statement}
 
 In this work, we used generative artificial intelligence as the object of study: every experimental result is a
@@ -457,10 +501,14 @@ Section~\ref{sec:limitations}: decoding temperature is non-zero, and the OpenRou
 depend on provider health at run time. The pinned-backend arms, which carry the paper's claims,
 avoid the second.
 
-\subsection*{Code availability}
+\subsection*{Data and code availability}
+
+The evaluation set is the public hard split of LiveCodeBench release\_v6 \citep{jain2024},
+obtainable from that benchmark's own distribution; this study released no new dataset.
 
 \iffinalversion
-The orchestration scaffold (both versions), the corrected LiveCodeBench evaluator, and the
+The data generated and analysed during this study, the orchestration scaffold (both
+versions), the corrected LiveCodeBench evaluator, and the
 analysis and figure scripts that produce every number and figure in this paper are available at
 \url{https://github.com/slee-persis/GVS5H}, together with all run outputs supporting the results
 - per-problem generations for every arm and condition, per-call \texttt{finish\_reason} and
@@ -664,7 +712,7 @@ attempts per problem one clamped call no longer costs the problem. \\
 \addlinespace
 MiniMax-M3 \newline (on) & 3701 & Printed nothing on \texttt{cdcd}: the lexicographic-reconstruction
 branch was broken. & Split the two coupled objectives across worker cycles - one worker on the
-forward cost DP over capped run-lengths, a separate worker on a suffix DP used purely for the
+forward cost dynamic program (DP) over capped run-lengths, a separate worker on a suffix DP used purely for the
 lexicographic reconstruction. \\
 \addlinespace
 Kimi-K3 \newline (128k, off) & 3687 & Over-counted the longest unique-value path (9 and 3 where the

@@ -11,7 +11,11 @@
 
 ## Results
 
-![Manager vs single call, six models — LCB-100, 5 passes, 128k max tokens, reasoning ON](assets/manager_vs_single_call.png)
+![Accuracy on LiveCodeBench, single call versus with manager, for seven models against Claude Fable 5's single-call score](assets/benchmark_livecodebench.png)
+
+*Opus 5 ran on an earlier version of the scaffold, in a single pass served through OpenRouter rather than five on a pinned backend.*
+
+![Average cost per task against accuracy, single call versus with manager, on a log-scale cost axis](assets/price_and_performance.png)
 
 ![What one pass costs — LCB-100, 5 passes, single call vs manager, against Fable 5](assets/what_one_pass_costs.png)
 

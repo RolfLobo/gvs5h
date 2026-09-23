@@ -1,0 +1,8 @@
+Frontier coding performance is typically attained with large, costly proprietary models. We introduce ledger-based zero-shot self-orchestration (GVS5H), a training-free method in which fresh instances of one model decompose problems and coordinate through a shared file system.
+A single model acts as a manager that writes a plan and maintains a task list, workers that each execute one assigned task, and a finalizer that emits the solution. 
+Every call starts from an empty context and reads state only from the shared ledger files.
+Across eleven open and closed-weight models on the 100 latest hard LiveCodeBench problems, six of them on pinned serving backends over five independent passes,
+the method yields as much as 25.6 points improvement, boosting several cheaper models to frontier-level performance.
+Orchestrated Qwen3.8 Flash Next scores 93.0% against Fable 5's 90.4% at 9% of the cost, while the smaller Qwen3.8-27B reaches 92.4%.
+Gains are not universal: some models are unchanged or worse. Transcript analysis attributes the gain to decomposition and persistent context.
+Inference-time organization can reach or exceed frontier coding accuracy at a fraction of the cost on self-hostable weights.

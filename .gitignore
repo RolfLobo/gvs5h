@@ -47,6 +47,8 @@ venv/
 # Superseded drafts, archived by their modified date.
 paper/old/
 blog/
+paper/cover*
+paper/*.zip
 
 # OS
 .DS_Store
@@ -54,3 +56,4 @@ blog/
 # Agents
 CLAUDE.md
 AGENTS.md
+
