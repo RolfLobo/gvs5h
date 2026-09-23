@@ -2,7 +2,7 @@
 ### GVS5H: Gorilla vs. 5 Humans
 
 <div align="center">
-<img src="assets/gvs5h-mark.png" alt="Five small monkeys stacked one on another, together as tall as a single gorilla beside them" width="300"/>
+<img src="assets/gvs5h-mark-humans.png" alt="Five boys standing on one another's shoulders, together as tall as a single gorilla beside them" width="300"/>
 </div>
 
 <div align="center">
